@@ -3,30 +3,74 @@ package mygame.map;
 import com.jme3.asset.AssetManager;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Vector2f;
+import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
+import com.jme3.texture.Texture;
+import com.jme3.texture.Texture.WrapMode;
+import com.jme3.util.SkyFactory;
 
 /**
  * Crea un terreno plano como campo de juego.
  */
 public class GameMap extends Node {
     
-    public static final int MAP_SIZE = 20; // 10x10 terreno
+    public static final int MAP_SIZE = 20; // 20x20 terreno
     public static final float TILE_SIZE = 1.0f;
     public static final float PATH_Y = 0.1f; // Altura del camino
 
     public GameMap(AssetManager assetManager) {
-        // Crear terreno base (plano grande rojo)
+        // Crear terreno base con textura
         Box ground = new Box(MAP_SIZE/2, 0.1f, MAP_SIZE/2);
+        
+        // Configurar coordenadas UV para la textura
+        // Valores menores hacen la textura más grande (menos repeticiones)
+        float textureRepeat = 1f; // Prueba con 1 para ver si cubre todo el mapa
+        ground.scaleTextureCoordinates(new Vector2f(textureRepeat, textureRepeat));
+        
         Geometry groundGeom = new Geometry("Ground", ground);
+        
+        // Usar material con textura
         Material groundMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        groundMat.setColor("Color", new ColorRGBA(0.5f, 0.1f, 0.1f, 1f)); // Rojo oscuro para el infierno
+        
+        // Cargar la textura
+        Texture groundTexture = assetManager.loadTexture("Textures/ground.jpg");
+        groundTexture.setWrap(Texture.WrapMode.Repeat); // Asegurar que la textura se repite
+        groundMat.setTexture("ColorMap", groundTexture);
+        
         groundGeom.setMaterial(groundMat);
         this.attachChild(groundGeom);
         
         // Crear camino (cubos naranjas)
         createPath(assetManager);
+        
+        // Crear cielo con textura
+        createSky(assetManager);
+    }
+    
+    // Método para crear el cielo
+    private void createSky(AssetManager assetManager) {
+        // Cargar la textura del cielo
+        Texture skyTexture = assetManager.loadTexture("Textures/redsky.jpg");
+        
+        // Mejorar la calidad de la textura
+        skyTexture.setAnisotropicFilter(16); // Mejora la nitidez en ángulos oblicuos
+        skyTexture.setMagFilter(Texture.MagFilter.Bilinear); // Suaviza la textura cuando se amplía
+        
+        // Crear el skybox usando la textura en todas las caras
+        // Usamos EquirectMap en lugar de SphereMap para mejor mapeo de una sola imagen rectangular
+        com.jme3.scene.Spatial sky = SkyFactory.createSky(
+                assetManager,
+                skyTexture,
+                Vector3f.UNIT_XYZ,
+                SkyFactory.EnvMapType.EquirectMap); // EquirectMap funciona mejor para imágenes panorámicas rectangulares
+        
+        // Ajustar el tamaño del cielo para asegurar que cubra toda la escena
+        sky.setLocalScale(500f);
+        
+        this.attachChild(sky);
     }
     
     private void createPath(AssetManager assetManager) {
