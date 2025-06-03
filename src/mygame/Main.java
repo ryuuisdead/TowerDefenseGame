@@ -4,6 +4,7 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.collision.CollisionResults;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
+import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
@@ -17,9 +18,9 @@ import mygame.enemies.Enemy;
 import mygame.map.GameMap;
 import mygame.map.Path;
 import mygame.towers.Tower;
+import mygame.towers.TowerType;
 import mygame.ui.GameUI;
 import com.jme3.material.Material; // Añadir esta importación
-import com.jme3.math.ColorRGBA; // Añadir esta importación
 
 
 
@@ -51,6 +52,7 @@ public class Main extends SimpleApplication implements ActionListener {
     // Indicador visual de colocación de torre
     private Geometry towerPlacementIndicator;
     private boolean isValidPlacement = false;
+    private Geometry towerIndicator; // Indicador de tipo de torre
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -75,10 +77,10 @@ public class Main extends SimpleApplication implements ActionListener {
         // Configurar cámara isométrica fija
         cam.setLocation(new Vector3f(8, 12, 12));
         cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
-        flyCam.setEnabled(false);
+        flyCam.setEnabled(true);
         
-        // Colocar una torre inicialmente
-        Tower tower = new Tower(assetManager, new Vector3f(2, 0.5f, 3));
+        // Colocar una torre inicialmente - CORREGIR ESTA LÍNEA
+        Tower tower = new Tower(assetManager, new Vector3f(2, 0.5f, 3), TowerType.BASIC);
         towers.add(tower);
         rootNode.attachChild(tower);
         
@@ -98,13 +100,67 @@ public class Main extends SimpleApplication implements ActionListener {
         // Registrar acción para colocar torres
         inputManager.addMapping(PLACE_TOWER, new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
         inputManager.addListener(this, PLACE_TOWER);
+        
+        // Mapeo de teclas para seleccionar torres
+        inputManager.addMapping("SelectTower1", new KeyTrigger(com.jme3.input.KeyInput.KEY_1));
+        inputManager.addMapping("SelectTower2", new KeyTrigger(com.jme3.input.KeyInput.KEY_2));
+        inputManager.addMapping("SelectTower3", new KeyTrigger(com.jme3.input.KeyInput.KEY_3));
+        
+        // Listener para acciones
+        inputManager.addListener(actionListener, "PlaceTower", "SelectTower1", "SelectTower2", "SelectTower3");
     }
     
     private void createTowerPlacementIndicator() {
         // Crear un indicador semitransparente para mostrar dónde se colocará la torre
-        towerPlacementIndicator = Tower.createIndicator(assetManager);
+        towerPlacementIndicator = Tower.createIndicator(assetManager, TowerType.BASIC);
         towerPlacementIndicator.setCullHint(Spatial.CullHint.Always); // Oculto por defecto
         rootNode.attachChild(towerPlacementIndicator);
+    }
+
+    private ActionListener actionListener = new ActionListener() {
+        @Override
+        public void onAction(String name, boolean isPressed, float tpf) {
+            if (isPressed) {
+                switch (name) {
+                    case "PlaceTower":
+                        placeTowerAtCursor();
+                        break;
+                    case "SelectTower1":
+                        gameUI.selectTowerType(TowerType.BASIC);
+                        updateTowerIndicator();
+                        break;
+                    case "SelectTower2":
+                        gameUI.selectTowerType(TowerType.SNIPER);
+                        updateTowerIndicator();
+                        break;
+                    case "SelectTower3":
+                        gameUI.selectTowerType(TowerType.RAPID);
+                        updateTowerIndicator();
+                        break;
+                }
+            }
+        }
+    };
+
+    // Método para actualizar el indicador de torre
+    private void updateTowerIndicator() {
+        // Eliminar indicador actual
+        if (towerIndicator != null) {
+            guiNode.detachChild(towerIndicator); // Cambiar a guiNode si lo estás usando para GUI
+        }
+        
+        // Crear nuevo indicador
+        TowerType selectedType = gameUI.getSelectedTowerType();
+        towerIndicator = Tower.createIndicator(assetManager, selectedType);
+        
+        // Posicionar en una esquina de la pantalla (coordenadas 2D)
+        // Por ejemplo, en la esquina inferior derecha
+        towerIndicator.setLocalTranslation(700, 100, 0);
+        
+        // Ajustar escala para que se vea bien en la GUI
+        towerIndicator.setLocalScale(50); // Más grande para GUI
+        
+        guiNode.attachChild(towerIndicator); // Usar guiNode para elementos de interfaz
     }
 
     @Override
@@ -133,7 +189,16 @@ public class Main extends SimpleApplication implements ActionListener {
             Vector3f contactPoint = results.getClosestCollision().getContactPoint();
             
             // Comprobar si es una posición válida para colocar una torre
-            if (isValidTowerPosition(contactPoint) && money >= TOWER_COST) {
+            if (isValidTowerPosition(contactPoint)) {
+                // Obtener el tipo de torre seleccionado
+                TowerType selectedType = gameUI.getSelectedTowerType();
+                
+                // Verificar si hay suficiente dinero
+                if (money < selectedType.getCost()) {
+                    System.out.println("No tienes suficiente dinero para construir una torre. Necesitas: " + selectedType.getCost());
+                    return;
+                }
+                
                 // Redondear a la posición de la cuadrícula
                 Vector3f gridPos = new Vector3f(
                     Math.round(contactPoint.x),
@@ -141,15 +206,65 @@ public class Main extends SimpleApplication implements ActionListener {
                     Math.round(contactPoint.z)
                 );
                 
-                // Crear y colocar la nueva torre
-                Tower newTower = new Tower(assetManager, gridPos);
+                // Crear y colocar la nueva torre con el tipo seleccionado
+                Tower newTower = new Tower(assetManager, gridPos, selectedType);
                 towers.add(newTower);
                 rootNode.attachChild(newTower);
                 
                 // Reducir el dinero del jugador
-                money -= TOWER_COST;
+                money -= selectedType.getCost();
                 
                 System.out.println("Torre colocada en " + gridPos + ". Dinero restante: " + money);
+            } else {
+                System.out.println("No se puede colocar una torre en esta posición.");
+            }
+        }
+    }
+    
+    private void placeTowerAtCursor() {
+        // Obtener la posición del ratón
+        Vector2f mousePos = inputManager.getCursorPosition();
+        
+        // Crear un rayo desde la cámara hacia la posición del ratón
+        Vector3f worldCoordinates = cam.getWorldCoordinates(mousePos, 0f).clone();
+        Vector3f dir = cam.getWorldCoordinates(mousePos, 1f).subtractLocal(worldCoordinates).normalizeLocal();
+        Ray ray = new Ray(worldCoordinates, dir);
+        
+        // Comprobar colisiones con el mapa
+        CollisionResults results = new CollisionResults();
+        gameMap.collideWith(ray, results);
+        
+        if (results.size() > 0) {
+            // Obtener el punto de colisión
+            Vector3f contactPoint = results.getClosestCollision().getContactPoint();
+            
+            // Redondear a la posición de la cuadrícula
+            Vector3f gridPos = new Vector3f(
+                Math.round(contactPoint.x),
+                0.5f, // Altura fija para las torres
+                Math.round(contactPoint.z)
+            );
+            
+            // Comprobar si es una posición válida para colocar una torre
+            if (isValidTowerPosition(contactPoint) && money >= TOWER_COST) {
+                // Obtener el tipo de torre seleccionado
+                TowerType selectedType = gameUI.getSelectedTowerType();
+                
+                // Verificar si hay suficiente dinero
+                if (money < selectedType.getCost()) {
+                    System.out.println("¡No hay suficiente dinero para construir la torre!");
+                    return;
+                }
+                
+                // Crear torre del tipo seleccionado
+                Tower newTower = new Tower(assetManager, gridPos, selectedType);
+                towers.add(newTower);
+                rootNode.attachChild(newTower);
+                
+                // Reducir el dinero del jugador
+                money -= selectedType.getCost();
+                
+                System.out.println("Torre colocada en " + gridPos + " del tipo " + selectedType + ". Dinero restante: " + money);
             } else {
                 if (money < TOWER_COST) {
                     System.out.println("No tienes suficiente dinero para construir una torre. Necesitas: " + TOWER_COST);
@@ -227,7 +342,7 @@ public class Main extends SimpleApplication implements ActionListener {
         }
         
         // Actualizar indicador de colocación de torre
-        updateTowerPlacementIndicator();
+       updateTowerPlacementIndicator();
         
         // Actualizar UI
         gameUI.update(money, score, currentWave, waveInProgress, 5.0f - waveTimer);
@@ -258,7 +373,8 @@ public class Main extends SimpleApplication implements ActionListener {
             );
             
             // Comprobar si es una posición válida
-            isValidPlacement = isValidTowerPosition(contactPoint) && money >= TOWER_COST;
+            TowerType selectedType = gameUI.getSelectedTowerType();
+            isValidPlacement = isValidTowerPosition(contactPoint) && money >= selectedType.getCost();
             
             // Mostrar indicador en la posición del ratón
             towerPlacementIndicator.setCullHint(Spatial.CullHint.Never);

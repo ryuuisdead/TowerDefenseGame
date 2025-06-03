@@ -19,8 +19,8 @@ public class Enemy extends Node {
     
     private List<Vector3f> waypoints;
     private int currentWaypoint = 0;
-    private int maxHealth = 100;
-    private int health = 100;
+    private int maxHealth = 200;
+    private int health = 200;
     private boolean alive = true;
     private Geometry enemyGeom; // Mantener para compatibilidad con daño
     

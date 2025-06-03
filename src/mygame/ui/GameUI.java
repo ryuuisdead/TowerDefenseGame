@@ -9,6 +9,7 @@ import com.jme3.font.BitmapFont;
 import com.jme3.font.BitmapText;
 import com.jme3.math.ColorRGBA;
 import com.jme3.scene.Node;
+import mygame.towers.TowerType;
 
 /**
  * Clase para gestionar los elementos de la interfaz de usuario
@@ -23,11 +24,20 @@ public class GameUI {
     private BitmapText scoreText;
     private BitmapText waveText;
     
+    // Elementos para selección de torres
+    private Node towerSelectionPanel;
+    private BitmapText[] towerButtons;
+    private BitmapText towerInfoText;
+    
+    // Torre seleccionada
+    private TowerType selectedTowerType = TowerType.BASIC;
+    
     public GameUI(Node guiNode, AssetManager assetManager) {
         this.guiNode = guiNode;
         this.assetManager = assetManager;
         
         initUI();
+        createTowerSelectionPanel();
     }
     
     private void initUI() {
@@ -58,13 +68,89 @@ public class GameUI {
         guiNode.attachChild(waveText);
     }
     
+    private void createTowerSelectionPanel() {
+        BitmapFont guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
+        
+        // Panel principal
+        towerSelectionPanel = new Node("TowerSelectionPanel");
+        
+        // Título del panel - Mover a la esquina inferior derecha
+        BitmapText title = new BitmapText(guiFont, false);
+        title.setSize(guiFont.getCharSet().getRenderedSize() * 1.2f);
+        title.setColor(ColorRGBA.Yellow);
+        title.setText("Seleccionar Torre:");
+        title.setLocalTranslation(600, 210, 0); // Cambiar de 20 a 600 para mover a la derecha
+        towerSelectionPanel.attachChild(title);
+        
+        // Botones para cada tipo de torre
+        TowerType[] types = TowerType.values();
+        towerButtons = new BitmapText[types.length];
+        
+        for (int i = 0; i < types.length; i++) {
+            TowerType type = types[i];
+            BitmapText button = new BitmapText(guiFont, false);
+            button.setSize(guiFont.getCharSet().getRenderedSize());
+            
+            // Color del botón según si está seleccionado
+            if (type == selectedTowerType) {
+                button.setColor(ColorRGBA.Green);
+            } else {
+                button.setColor(ColorRGBA.White);
+            }
+            
+            button.setText("[" + (i+1) + "] " + type.getName() + " - $" + type.getCost());
+            button.setLocalTranslation(600, 180 - (i * 25), 0); // Cambiar de 20 a 600
+            
+            towerButtons[i] = button;
+            towerSelectionPanel.attachChild(button);
+        }
+        
+        // Información de la torre seleccionada
+        towerInfoText = new BitmapText(guiFont, false);
+        towerInfoText.setSize(guiFont.getCharSet().getRenderedSize() * 0.8f);
+        towerInfoText.setColor(new ColorRGBA(0.8f, 0.8f, 1f, 1f));
+        updateTowerInfo();
+        towerInfoText.setLocalTranslation(600, 102, 0); // Cambiar de 20 a 600
+        towerSelectionPanel.attachChild(towerInfoText);
+        
+        
+        guiNode.attachChild(towerSelectionPanel);
+    }
+    
+    private void updateTowerInfo() {
+        StringBuilder info = new StringBuilder();
+        info.append("Torre: ").append(selectedTowerType.getName()).append("\n");
+        info.append("Costo: $").append(selectedTowerType.getCost()).append("\n");
+        info.append("Damage: ").append(selectedTowerType.getDamage()).append("\n");
+        info.append("Range: ").append(selectedTowerType.getRange()).append("\n");
+        info.append("Cadencia: ").append(String.format("%.1f", selectedTowerType.getFireRate())).append("/s\n");
+        info.append(selectedTowerType.getDescription());
+        
+        towerInfoText.setText(info.toString());
+    }
+    
+    public void selectTowerType(TowerType type) {
+        this.selectedTowerType = type;
+        
+        // Actualizar la UI
+        for (int i = 0; i < towerButtons.length; i++) {
+            if (TowerType.values()[i] == selectedTowerType) {
+                towerButtons[i].setColor(ColorRGBA.Green);
+            } else {
+                towerButtons[i].setColor(ColorRGBA.White);
+            }
+        }
+        
+        // Actualizar descripción
+        updateTowerInfo();
+    }
+    
+    public TowerType getSelectedTowerType() {
+        return selectedTowerType;
+    }
+    
     /**
      * Actualiza el texto de la interfaz con los valores actuales
-     * @param money Dinero actual del jugador
-     * @param score Puntuación actual
-     * @param currentWave Número de oleada actual
-     * @param waveInProgress Indica si hay una oleada en curso
-     * @param timeToNextWave Tiempo hasta la próxima oleada (en segundos)
      */
     public void update(int money, int score, int currentWave, boolean waveInProgress, float timeToNextWave) {
         moneyText.setText("Dinero: $" + money);
@@ -72,11 +158,25 @@ public class GameUI {
         
         if (waveInProgress) {
             waveText.setText("Oleada: " + currentWave + " (en progreso)");
-            waveText.setColor(new ColorRGBA(1f, 0.3f, 0.3f, 1f)); // Rojo más intenso durante las oleadas
+            waveText.setColor(new ColorRGBA(1f, 0.3f, 0.3f, 1f));
         } else {
             int timeLeft = Math.round(timeToNextWave);
             waveText.setText("Oleada: " + currentWave + " (próxima en " + timeLeft + " s)");
-            waveText.setColor(new ColorRGBA(1f, 0.5f, 0.5f, 1f)); // Color normal entre oleadas
+            waveText.setColor(new ColorRGBA(1f, 0.5f, 0.5f, 1f));
+        }
+        
+        // Actualizar disponibilidad de torres según el dinero
+        for (int i = 0; i < towerButtons.length; i++) {
+            TowerType type = TowerType.values()[i];
+            if (money >= type.getCost()) {
+                if (type == selectedTowerType) {
+                    towerButtons[i].setColor(ColorRGBA.Green);
+                } else {
+                    towerButtons[i].setColor(ColorRGBA.White);
+                }
+            } else {
+                towerButtons[i].setColor(ColorRGBA.Red); // No hay suficiente dinero
+            }
         }
     }
 }
