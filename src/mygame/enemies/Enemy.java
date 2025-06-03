@@ -177,15 +177,20 @@ public class Enemy extends Node {
     private void createHealthBar(AssetManager assetManager) {
         healthBarNode = new Node("HealthBar");
         
+        // Tamaño mejorado para las barras de salud
+        float barWidth = 0.4f;
+        float barHeight = 0.06f;
+        float barDepth = 0.04f;
+        
         // Fondo de la barra (rojo)
-        Box bgBox = new Box(0.3f, 0.03f, 0.01f);
+        Box bgBox = new Box(barWidth, barHeight, barDepth);
         healthBarBg = new Geometry("HealthBarBg", bgBox);
         Material bgMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         bgMat.setColor("Color", ColorRGBA.Red);
         healthBarBg.setMaterial(bgMat);
         
         // Barra de salud actual (verde)
-        Box fgBox = new Box(0.3f, 0.03f, 0.02f);
+        Box fgBox = new Box(barWidth, barHeight, barDepth + 0.01f); // Ligeramente más profundo para que esté por encima
         healthBarFg = new Geometry("HealthBarFg", fgBox);
         Material fgMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         fgMat.setColor("Color", ColorRGBA.Green);
@@ -195,9 +200,19 @@ public class Enemy extends Node {
         healthBarNode.attachChild(healthBarBg);
         healthBarNode.attachChild(healthBarFg);
         
-        // Posicionar la barra de salud arriba del enemigo (ajustado para el modelo 3D)
-        float healthBarHeight = useModel ? 1.0f : SIZE + 0.15f;
+        // Ajustar la posición de la barra de salud según el modelo usado
+        float healthBarHeight;
+        if (useModel) {
+            healthBarHeight = 2.5f; // Aumentado de 1.5f a 2.0f para ponerla más arriba sobre la cabeza
+        } else {
+            healthBarHeight = SIZE * 2 + 0.9f; // También aumentado para el cubo
+        }
+        
+        // Posicionamos la barra por encima del enemigo
         healthBarNode.setLocalTranslation(0, healthBarHeight, 0);
+        
+        // Hacer que la barra siempre mire hacia la cámara
+        healthBarNode.setLocalRotation(new Quaternion().fromAngles(FastMath.HALF_PI, 0, 0));
         
         // Añadir barra de salud al enemigo
         this.attachChild(healthBarNode);
@@ -229,7 +244,9 @@ public class Enemy extends Node {
                 currentWaypoint++;
             }
         }
+        
     }
+    
     
     public void takeDamage(int amount) {
         health -= amount;
@@ -249,26 +266,31 @@ public class Enemy extends Node {
             // Ocultar barra de salud cuando muere
             healthBarNode.removeFromParent();
         } else {
-            // Efecto visual de daño
-            if (useModel && zombieModel != null) {
-                // Aplicar tinte rojizo al zombie cuando recibe daño
-                float healthPercent = health / (float)maxHealth;
-                applyMaterialToSpatial(zombieModel, createDamageMaterial(healthPercent));
-            } else {
-                // Cambiar color del cubo
-                float healthPercent = health / (float)maxHealth;
-                Material mat = enemyGeom.getMaterial();
-                mat.setColor("Color", new ColorRGBA(1f, healthPercent * 0.5f, healthPercent * 0.5f, 1f));
-            }
-            
             // Actualizar tamaño de la barra de salud
             float healthPercent = health / (float)maxHealth;
+            
+            // Redimensionar la barra verde (parte delantera)
             Vector3f scale = healthBarFg.getLocalScale();
             scale.x = healthPercent;
             healthBarFg.setLocalScale(scale);
             
-            // Ajustar la posición de la barra según el tamaño
-            healthBarFg.setLocalTranslation((1 - healthPercent) * 0.3f, 0, 0);
+            // Ajustar la posición de la barra según el tamaño para que se reduzca desde la derecha
+            float barWidth = 0.4f; // El mismo valor que usamos en createHealthBar
+            float offset = barWidth * (1 - healthPercent);
+            healthBarFg.setLocalTranslation(-offset, 0, 0);
+            
+            // Cambiar el color de la barra dependiendo de la salud
+            Material fgMat = healthBarFg.getMaterial();
+            if (healthPercent > 0.6f) {
+                // Verde para buena salud
+                fgMat.setColor("Color", new ColorRGBA(0.0f, 1.0f, 0.0f, 1.0f));
+            } else if (healthPercent > 0.3f) {
+                // Amarillo para salud media
+                fgMat.setColor("Color", new ColorRGBA(1.0f, 1.0f, 0.0f, 1.0f));
+            } else {
+                // Naranja para salud baja
+                fgMat.setColor("Color", new ColorRGBA(1.0f, 0.5f, 0.0f, 1.0f));
+            }
         }
     }
     

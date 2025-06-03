@@ -39,22 +39,22 @@ public class GameMap extends Node {
         
         Node pathNode = new Node("Path");
         
-        for (int[] coord : pathCoords) {
-            Box tile = new Box(TILE_SIZE/2, 0.1f, TILE_SIZE/2);
-            Geometry tileGeom = new Geometry("PathTile", tile);
-            Material tileMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-            tileMat.setColor("Color", ColorRGBA.Orange);
-            tileGeom.setMaterial(tileMat);
+        // for (int[] coord : pathCoords) {
+        //     Box tile = new Box(TILE_SIZE/2, 0.1f, TILE_SIZE/2);
+        //     Geometry tileGeom = new Geometry("PathTile", tile);
+        //     Material tileMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        //     tileMat.setColor("Color", ColorRGBA.Black); // Naranja oscuro para el camino
+        //     tileGeom.setMaterial(tileMat);
             
-            // Posicionamos un poco más arriba que el suelo base
-            tileGeom.setLocalTranslation(
-                (coord[0] - MAP_SIZE/2 + 0.5f) * TILE_SIZE, 
-                PATH_Y, 
-                (coord[1] - MAP_SIZE/2 + 0.5f) * TILE_SIZE
-            );
+        //     // Posicionamos un poco más arriba que el suelo base
+        //     tileGeom.setLocalTranslation(
+        //         (coord[0] - MAP_SIZE/2 + 0.5f) * TILE_SIZE, 
+        //         PATH_Y, 
+        //         (coord[1] - MAP_SIZE/2 + 0.5f) * TILE_SIZE
+        //     );
             
-            pathNode.attachChild(tileGeom);
-        }
+        //     pathNode.attachChild(tileGeom);
+        // }
         
         this.attachChild(pathNode);
     }
