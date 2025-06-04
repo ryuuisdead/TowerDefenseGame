@@ -22,12 +22,10 @@ import mygame.map.Path;
 import mygame.towers.Tower;
 import mygame.towers.TowerType;
 import mygame.ui.GameUI;
-import com.jme3.material.Material; // Añadir esta importación
+import com.jme3.material.Material;
 import com.jme3.scene.Node;
 import com.jme3.math.ColorRGBA;
-// Añade esta importación al inicio del archivo, junto con las otras importaciones
 import com.jme3.texture.Texture;
-import com.jme3.texture.Texture.WrapMode;
 
 
 
@@ -87,17 +85,18 @@ public class Main extends SimpleApplication implements ActionListener {
         path = new Path();
         
         // Configurar cámara isométrica fija para visualizar mejor el mapa completo
-        cam.setLocation(new Vector3f(0, 15, 15));
+        cam.setLocation(new Vector3f(-12, 10, 8));
         cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
-        flyCam.setEnabled(true);
+        flyCam.setEnabled(false);
+        flyCam.setMoveSpeed(15f);
         
         // Crear portal en el punto final del recorrido
         createPortal();
         
         // Colocar una torre inicialmente
-        Tower tower = new Tower(assetManager, new Vector3f(2, 0.5f, 3), TowerType.BASIC);
-        towers.add(tower);
-        rootNode.attachChild(tower);
+        // Tower tower = new Tower(assetManager, new Vector3f(2, 0.5f, 3), TowerType.BASIC);
+        // towers.add(tower);
+        // rootNode.attachChild(tower);
         
         // Inicializar la interfaz de usuario
         gameUI = new GameUI(guiNode, assetManager);
@@ -477,7 +476,7 @@ public class Main extends SimpleApplication implements ActionListener {
             portal.setLocalScale(1.5f);
             
             // Posicionar el portal al final del camino, ligeramente elevado
-            portal.setLocalTranslation(portalPosition.x, 1.0f, portalPosition.z);
+            portal.setLocalTranslation(portalPosition.x, 0.74f, portalPosition.z);
             
             // Rotar el portal con un Quaternion para mayor precisión
             com.jme3.math.Quaternion rotation = new com.jme3.math.Quaternion();

@@ -36,7 +36,7 @@ public class Tower extends Node {
     // Modelo 3D
     private Spatial towerModel;
     private Node topNode;
-    private boolean useModel = false; // Usar cubos en lugar del modelo 3D
+    private boolean useModel = true; // Cambiar a true para usar el modelo 3D
     
     // Clase interna para manejar información de proyectiles
     private class ProjectileInfo {
@@ -62,8 +62,12 @@ public class Tower extends Node {
         this.fireRate = type.getFireRate();
         this.damage = type.getDamage();
         
-        // Crear torre básica con cubos
-        createBasicTowerModel(type);
+        // Crear modelo de torre según tipo
+        if (useModel) {
+            createTower3DModel(type);
+        } else {
+            createBasicTowerModel(type);
+        }
         
         // Nodo para proyectiles
         projectilesNode = new Node("ProjectilesNode");
@@ -134,6 +138,100 @@ public class Tower extends Node {
         }
         
         this.attachChild(topNode);
+    }
+    
+    // Modificar el método que carga los modelos 3D para usar diferentes modelos según el tipo
+    private void createTower3DModel(TowerType type) {
+        try {
+            // Variable para la ruta del modelo
+            String modelPath;
+            float modelScale;
+            
+            // Seleccionar el modelo según el tipo de torre
+            switch (type) {
+                case SNIPER:
+                    modelPath = "Models/uploads_files_2746671_Sci-fi+Tower/uploads_files_2746671_Sci-fi+Tower.j3o";
+                    modelScale = 0.12f; // Ajustar la escala según este modelo
+                    break;
+                case RAPID:
+                    modelPath = "Models/wizard tower/wizard tower.j3o"; // Por ahora usa el mismo modelo
+                    modelScale = 0.05f;
+                    break;
+                default: // BASIC
+                    modelPath = "Models/medivialtower/medivialtower.j3o";
+                    modelScale = 0.36f;
+                    break;
+            }
+            
+            // Cargar el modelo
+            towerModel = assetManager.loadModel(modelPath);
+            
+            // Ajustar escala del modelo según el tipo
+            towerModel.setLocalScale(modelScale);
+            
+            // Ajustar la posición según el tipo de torre para corregir desfases
+            if (type == TowerType.SNIPER) {
+                // Corregir el offset del modelo Sci-Fi
+                // Estos valores debes ajustarlos según necesites
+                towerModel.setLocalTranslation(0.1f,-1f, 1.3f); // Valores iniciales para probar
+            }
+            
+            if (type == TowerType.RAPID) {
+               
+                towerModel.setLocalTranslation(0,-0.4f,0); // Valores iniciales para probar
+            }
+            
+            
+            
+            // La base del modelo estará en la posición de la torre
+            this.attachChild(towerModel);
+            
+            // Crear el nodo superior para la rotación (parte que apunta a los enemigos)
+            topNode = new Node("TowerTop");
+            
+            // Verificar el tipo de modelo y manejarlo adecuadamente
+            if (towerModel instanceof Node) {
+                // Si es un Node, podemos buscar partes específicas
+                Node modelNode = (Node) towerModel;
+                
+                // Buscar un componente que pueda ser la torreta
+                boolean foundTurret = false;
+                for (Spatial child : modelNode.getChildren()) {
+                    String name = child.getName().toLowerCase();
+                    if (name.contains("top") || name.contains("turret") || 
+                        name.contains("cannon") || name.contains("gun")) {
+                        topNode.attachChild(child);
+                        foundTurret = true;
+                        System.out.println("Usando " + child.getName() + " como torreta giratoria");
+                        break;
+                    }
+                }
+                
+                // Si no encontramos una parte específica, usar todo el modelo
+                if (!foundTurret) {
+                    // En lugar de asignar directamente, creamos un nodo nuevo
+                    // y lo conectamos al modelo principal
+                    topNode = new Node("TowerTopWrapper");
+                    this.attachChild(topNode);
+                    topNode.setLocalTranslation(0, 1.0f, 0); // Posicionar adecuadamente
+                }
+            } else {
+                // Si el modelo es una geometría directa, crear un nodo superior simple
+                System.out.println("Modelo de torre es una geometría, no un nodo. Usando nodo superior para rotación.");
+                topNode = new Node("TowerTopWrapper");
+                this.attachChild(topNode);
+                topNode.setLocalTranslation(0, 1.0f, 0); // Posicionarlo encima del modelo
+            }
+            
+            System.out.println("Modelo 3D cargado para torre " + type.getName() + ": " + modelPath);
+        } catch (Exception e) {
+            System.err.println("Error al cargar modelo 3D para " + type.getName() + ": " + e.getMessage());
+            e.printStackTrace();
+            
+            // Si falla la carga del modelo 3D, usar el modelo básico de cubos
+            useModel = false;
+            createBasicTowerModel(type);
+        }
     }
     
     public void setApplication(Main app) {

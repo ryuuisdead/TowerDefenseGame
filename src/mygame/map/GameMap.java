@@ -17,7 +17,7 @@ import com.jme3.util.SkyFactory;
  */
 public class GameMap extends Node {
     
-    public static final int MAP_SIZE = 20; // 20x20 terreno
+    public static final int MAP_SIZE = 30; // 20x20 terreno
     public static final float TILE_SIZE = 1.0f;
     public static final float PATH_Y = 0.1f; // Altura del camino
 
