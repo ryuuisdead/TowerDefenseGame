@@ -27,10 +27,7 @@ import com.jme3.scene.Node;
 import com.jme3.math.ColorRGBA;
 import com.jme3.texture.Texture;
 
-
-
-
-public class Main extends SimpleApplication implements ActionListener {
+public class Main extends SimpleApplication {
 
     private List<Enemy> enemies = new ArrayList<>();
     private List<Tower> towers = new ArrayList<>();
@@ -59,7 +56,7 @@ public class Main extends SimpleApplication implements ActionListener {
     private boolean isValidPlacement = false;
     private Geometry towerIndicator; // Indicador de tipo de torre
     
-    // Añadir como atributo de la clase Main
+    // Portal y sistema de game over
     private Spatial portal;
     private int escapedDemons = 0;
     private final int MAX_ESCAPED_DEMONS = 5;
@@ -97,11 +94,6 @@ public class Main extends SimpleApplication implements ActionListener {
         // Crear portal en el punto final del recorrido
         createPortal();
         
-        // Colocar una torre inicialmente
-        // Tower tower = new Tower(assetManager, new Vector3f(2, 0.5f, 3), TowerType.BASIC);
-        // towers.add(tower);
-        // rootNode.attachChild(tower);
-        
         // Inicializar la interfaz de usuario
         gameUI = new GameUI(guiNode, assetManager);
         
@@ -115,7 +107,7 @@ public class Main extends SimpleApplication implements ActionListener {
     private void setupInputs() {
         // Registrar acción para colocar torres
         inputManager.addMapping(PLACE_TOWER, new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
-        inputManager.addListener(this, PLACE_TOWER);
+        inputManager.addListener(actionListener, PLACE_TOWER);
         
         // Mapeo de teclas para seleccionar torres
         inputManager.addMapping("SelectTower1", new KeyTrigger(com.jme3.input.KeyInput.KEY_1));
@@ -130,7 +122,7 @@ public class Main extends SimpleApplication implements ActionListener {
         inputManager.addMapping("SelectTower", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
         inputManager.addListener(actionListener, "SelectTower");
         
-        // Cambiar DeleteTower para usar la tecla E en lugar de DELETE
+        // Cambiar DeleteTower para usar la tecla E
         inputManager.addMapping("DeleteTower", new KeyTrigger(com.jme3.input.KeyInput.KEY_E));
         inputManager.addListener(actionListener, "DeleteTower");
         
@@ -168,11 +160,9 @@ public class Main extends SimpleApplication implements ActionListener {
                     case "SelectTower":
                         selectTowerAtCursor();
                         break;
-                        
                     case "UpgradeTower":
                         upgradeTower();
                         break;
-                        
                     case "DeleteTower":
                         deleteTower();
                         break;
@@ -185,7 +175,7 @@ public class Main extends SimpleApplication implements ActionListener {
     private void updateTowerIndicator() {
         // Eliminar indicador actual
         if (towerIndicator != null) {
-            guiNode.detachChild(towerIndicator); // Cambiar a guiNode si lo estás usando para GUI
+            guiNode.detachChild(towerIndicator);
         }
         
         // Crear nuevo indicador
@@ -193,73 +183,14 @@ public class Main extends SimpleApplication implements ActionListener {
         towerIndicator = Tower.createIndicator(assetManager, selectedType);
         
         // Posicionar en una esquina de la pantalla (coordenadas 2D)
-        // Por ejemplo, en la esquina inferior derecha
         towerIndicator.setLocalTranslation(550, 80, 0);
         
         // Ajustar escala para que se vea bien en la GUI
-        towerIndicator.setLocalScale(50); // Más grande para GUI
+        towerIndicator.setLocalScale(50);
         
-        guiNode.attachChild(towerIndicator); // Usar guiNode para elementos de interfaz
+        guiNode.attachChild(towerIndicator);
     }
 
-    @Override
-    public void onAction(String name, boolean isPressed, float tpf) {
-        if (name.equals(PLACE_TOWER) && !isPressed) {
-            // Solo procesar cuando se suelta el botón
-            placeTowerAtMousePosition();
-        }
-    }
-    
-    private void placeTowerAtMousePosition() {
-        // Obtener la posición del ratón
-        Vector2f mousePos = inputManager.getCursorPosition();
-        
-        // Crear un rayo desde la cámara hacia la posición del ratón
-        Vector3f worldCoordinates = cam.getWorldCoordinates(mousePos, 0f).clone();
-        Vector3f dir = cam.getWorldCoordinates(mousePos, 1f).subtractLocal(worldCoordinates).normalizeLocal();
-        Ray ray = new Ray(worldCoordinates, dir);
-        
-        // Comprobar colisiones con el mapa
-        CollisionResults results = new CollisionResults();
-        gameMap.collideWith(ray, results);
-        
-        if (results.size() > 0) {
-            // Obtener el punto de colisión
-            Vector3f contactPoint = results.getClosestCollision().getContactPoint();
-            
-            // Comprobar si es una posición válida para colocar una torre
-            if (isValidTowerPosition(contactPoint)) {
-                // Obtener el tipo de torre seleccionado
-                TowerType selectedType = gameUI.getSelectedTowerType();
-                
-                // Verificar si hay suficiente dinero
-                if (money < selectedType.getCost()) {
-                    System.out.println("No tienes suficiente dinero para construir una torre. Necesitas: " + selectedType.getCost());
-                    return;
-                }
-                
-                // Redondear a la posición de la cuadrícula
-                Vector3f gridPos = new Vector3f(
-                    Math.round(contactPoint.x),
-                    0.5f, // Altura fija para las torres
-                    Math.round(contactPoint.z)
-                );
-                
-                // Crear y colocar la nueva torre con el tipo seleccionado
-                Tower newTower = new Tower(assetManager, gridPos, selectedType);
-                towers.add(newTower);
-                rootNode.attachChild(newTower);
-                
-                // Reducir el dinero del jugador
-                money -= selectedType.getCost();
-                
-                System.out.println("Torre colocada en " + gridPos + ". Dinero restante: " + money);
-            } else {
-                System.out.println("No se puede colocar una torre en esta posición.");
-            }
-        }
-    }
-    
     private void placeTowerAtCursor() {
         // Obtener la posición del ratón
         Vector2f mousePos = inputManager.getCursorPosition();
@@ -285,7 +216,7 @@ public class Main extends SimpleApplication implements ActionListener {
             );
             
             // Comprobar si es una posición válida para colocar una torre
-            if (isValidTowerPosition(contactPoint) && money >= TOWER_COST) {
+            if (isValidTowerPosition(contactPoint)) {
                 // Obtener el tipo de torre seleccionado
                 TowerType selectedType = gameUI.getSelectedTowerType();
                 
@@ -302,6 +233,7 @@ public class Main extends SimpleApplication implements ActionListener {
                 
                 // Reducir el dinero del jugador
                 money -= selectedType.getCost();
+                gameUI.updateMoney(money);
                 
                 System.out.println("Torre colocada en " + gridPos + " del tipo " + selectedType + ". Dinero restante: " + money);
             } else {
@@ -379,7 +311,7 @@ public class Main extends SimpleApplication implements ActionListener {
         }
         
         // Actualizar indicador de colocación de torre
-       updateTowerPlacementIndicator();
+        updateTowerPlacementIndicator();
         
         // Actualizar UI
         gameUI.update(money, score, currentWave, waveInProgress, 5.0f - waveTimer);
@@ -464,7 +396,6 @@ public class Main extends SimpleApplication implements ActionListener {
     
     /**
      * Crea y añade un nuevo enemigo a la escena
-     * Versión modificada para incluir enemigos tipo tanque desde oleada 3
      */
     private void spawnEnemy() {
         // Seleccionar tipo de enemigo según la oleada actual y probabilidad
@@ -549,7 +480,6 @@ public class Main extends SimpleApplication implements ActionListener {
 
     /**
      * Aplica colores sólidos a las diferentes partes del portal
-     * (Versión simplificada mientras se resuelven problemas de texturas)
      */
     private void applyPortalTextures(Spatial portalModel) {
         if (!(portalModel instanceof Node)) {
@@ -569,13 +499,11 @@ public class Main extends SimpleApplication implements ActionListener {
             // Crear materiales texturizados
             Material frameMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
             frameMaterial.setTexture("ColorMap", frameMetalAlbedo);
-            // Añadir un tinte oscuro al marco del portal
             frameMaterial.setColor("Color", new ColorRGBA(0.4f, 0.4f, 0.5f, 1.0f));
             
             // Mejorar el material del portal central con color más intenso
             Material portalMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
             portalMaterial.setTexture("ColorMap", portalAlbedo);
-            // Añadir color púrpura brillante además de la textura para hacerlo más visible
             portalMaterial.setColor("Color", new ColorRGBA(0.8f, 0.2f, 0.9f, 0.7f));
             portalMaterial.getAdditionalRenderState().setBlendMode(com.jme3.material.RenderState.BlendMode.Alpha);
             
@@ -587,7 +515,6 @@ public class Main extends SimpleApplication implements ActionListener {
             
             Material torchLightMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
             torchLightMaterial.setTexture("ColorMap", torchLight);
-            // Añadir brillo naranja/amarillo para las llamas
             torchLightMaterial.setColor("Color", new ColorRGBA(1.0f, 0.6f, 0.0f, 1.0f));
             
             // Matriz de materiales para aplicar por orden
@@ -615,7 +542,6 @@ public class Main extends SimpleApplication implements ActionListener {
             }
             
             // Asegurar que el portal central tenga el material correcto
-            // Generalmente es el índice 2, pero comprobemos el nombre
             for (int i = 0; i < portalNode.getChildren().size(); i++) {
                 String name = portalNode.getChild(i).getName().toLowerCase();
                 if (name.contains("portal") || name.contains("energy") || name.contains("center") || i == 2) {
@@ -635,7 +561,6 @@ public class Main extends SimpleApplication implements ActionListener {
         } catch (Exception e) {
             System.out.println("Error al aplicar texturas al portal: " + e.getMessage());
             e.printStackTrace();
-            
         }
     }
 
@@ -650,7 +575,6 @@ public class Main extends SimpleApplication implements ActionListener {
             }
         }
     }
-    
 
     // Método para manejar cuando un enemigo escapa
     private void handleEnemyEscape(Enemy enemy) {
@@ -682,28 +606,6 @@ public class Main extends SimpleApplication implements ActionListener {
         }
     }
 
-    // Método para animar el portal cuando un demonio escapa
-    private void animatePortal() {
-        // Efecto simple de escalado
-        portal.setLocalScale(1.2f); // Aumentar tamaño
-        
-        // Programar para volver al tamaño normal después de un breve tiempo
-        new java.util.Timer().schedule(
-            new java.util.TimerTask() {
-                @Override
-                public void run() {
-                    // Asegurarse de ejecutar en el hilo de renderizado
-                    enqueue(() -> {
-                        if (portal != null) {
-                            portal.setLocalScale(1.0f);
-                        }
-                    });
-                }
-            }, 
-            300 // milisegundos
-        );
-    }
-
     // Método para manejar el game over
     private void gameOver() {
         System.out.println("=== GAME OVER ===");
@@ -716,18 +618,6 @@ public class Main extends SimpleApplication implements ActionListener {
         
         // Detener la generación de oleadas
         waveInProgress = false;
-        
-        // Opcional: programar cierre del juego después de un tiempo
-        new java.util.Timer().schedule(
-            new java.util.TimerTask() {
-                @Override
-                public void run() {
-                    // Se puede cerrar la app o volver al menú principal
-                    //stop(); // Descomentar para cerrar el juego
-                }
-            }, 
-            10000 // 10 segundos para ver el mensaje
-        );
     }
 
     private void selectTowerAtCursor() {
@@ -819,8 +709,7 @@ public class Main extends SimpleApplication implements ActionListener {
     }
     
     private void showTowerInfo(Tower tower) {
-        // Este método debe actualizar la UI para mostrar información de la torre seleccionada
-        // Incluyendo su nivel actual, estadísticas y costo de mejora
+        // Este método actualiza la UI para mostrar información de la torre seleccionada
         gameUI.showTowerInfo(tower);
     }
     
@@ -862,5 +751,10 @@ public class Main extends SimpleApplication implements ActionListener {
         
         // Limpiar la selección
         selectedTower = null;
+    }
+    
+    // Getter para GameMap (necesario para verificación en GameState)
+    public GameMap getGameMap() {
+        return gameMap;
     }
 }
