@@ -84,7 +84,7 @@ public class GameMap extends Node {
         Material pathMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         
         // Cargar textura para el camino
-        Texture pathTexture = assetManager.loadTexture("Textures/path1.jpg");
+        Texture pathTexture = assetManager.loadTexture("Textures/redsky.jpg");
         pathTexture.setWrap(WrapMode.Repeat);
         pathMat.setTexture("ColorMap", pathTexture);
         

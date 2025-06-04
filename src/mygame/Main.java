@@ -14,7 +14,6 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Spatial;
 import com.jme3.system.AppSettings;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import mygame.enemies.Enemy;
 import mygame.enemies.EnemyType;
@@ -24,6 +23,8 @@ import mygame.towers.Tower;
 import mygame.towers.TowerType;
 import mygame.ui.GameUI;
 import com.jme3.material.Material; // Añadir esta importación
+import com.jme3.scene.Node;
+import com.jme3.math.ColorRGBA;
 
 
 
@@ -56,6 +57,11 @@ public class Main extends SimpleApplication implements ActionListener {
     private Geometry towerPlacementIndicator;
     private boolean isValidPlacement = false;
     private Geometry towerIndicator; // Indicador de tipo de torre
+    
+    // Añadir como atributo de la clase Main
+    private Spatial portal;
+    private int escapedDemons = 0;
+    private final int MAX_ESCAPED_DEMONS = 5;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -80,9 +86,12 @@ public class Main extends SimpleApplication implements ActionListener {
         // Configurar cámara isométrica fija para visualizar mejor el mapa completo
         cam.setLocation(new Vector3f(0, 15, 15));
         cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
-        flyCam.setEnabled(false);
+        flyCam.setEnabled(true);
         
-        // Colocar una torre inicialmente - CORREGIR ESTA LÍNEA
+        // Crear portal en el punto final del recorrido
+        createPortal();
+        
+        // Colocar una torre inicialmente
         Tower tower = new Tower(assetManager, new Vector3f(2, 0.5f, 3), TowerType.BASIC);
         towers.add(tower);
         rootNode.attachChild(tower);
@@ -95,8 +104,6 @@ public class Main extends SimpleApplication implements ActionListener {
         
         // Crear indicador de colocación de torres
         createTowerPlacementIndicator();
-        
-        
     }
     
     private void setupInputs() {
@@ -314,16 +321,20 @@ public class Main extends SimpleApplication implements ActionListener {
         // Actualizar enemigos
         List<Enemy> deadEnemies = new ArrayList<>();
         for (Enemy e : enemies) {
-            if (e.isAlive() && !e.hasFinishedPath()) {
+            if (e.isAlive()) {
                 e.update(tpf);
+                
+                // Verificar si el enemigo ha llegado al final del camino
+                if (e.hasFinishedPath()) {
+                    handleEnemyEscape(e);
+                    deadEnemies.add(e);
+                }
             } else {
                 deadEnemies.add(e);
                 
-                // Dar dinero si el enemigo fue derrotado (no llegó al final)
-                if (!e.isAlive()) {
-                    money += 10;
-                    score += 5;
-                }
+                // Dar recompensas por enemigo derrotado
+                money += e.getReward();
+                score += e.getType() == EnemyType.HELLHOUND ? 25 : 10;
             }
         }
 
@@ -332,7 +343,7 @@ public class Main extends SimpleApplication implements ActionListener {
             rootNode.detachChild(e);
         }
         enemies.removeAll(deadEnemies);
-
+        
         // Actualizar torres
         for (Tower t : towers) {
             t.update(tpf, enemies, rootNode);
@@ -443,5 +454,134 @@ public class Main extends SimpleApplication implements ActionListener {
         
         // Actualizar contador
         enemiesSpawned++;
+    }
+    
+    // Crear el portal en el punto final del camino
+    private void createPortal() {
+        try {
+            System.out.println("Intentando cargar modelo de portal...");
+            
+            // Cargar el modelo del portal
+            portal = assetManager.loadModel("Models/portal frame game ready/portal frame game ready.j3o");
+            
+            // Obtener la última posición del camino (destino de los enemigos)
+            List<Vector3f> waypoints = path.getWaypoints();
+            Vector3f portalPosition = waypoints.get(waypoints.size() - 1);
+            
+            System.out.println("Modelo de portal cargado. Posicionando en: " + portalPosition);
+            
+            // Ajustar la escala y posición del portal
+            portal.setLocalScale(1.5f);
+            
+            // Posicionar el portal al final del camino, ligeramente elevado
+            portal.setLocalTranslation(portalPosition.x, 1.0f, portalPosition.z);
+
+            
+            // Rotar el portal con un Quaternion para mayor precisión
+            com.jme3.math.Quaternion rotation = new com.jme3.math.Quaternion();
+            rotation.fromAngles(0, -FastMath.PI * 2.5f, 0);  // 1.5π = 270 grados
+            portal.setLocalRotation(rotation);
+            
+            // // Añadir material para hacerlo destacar
+            // Material portalMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            // portalMaterial.setColor("Color", new ColorRGBA(0.7f, 0.2f, 0.9f, 1.0f)); // Color púrpura
+            
+            // // Aplicar material a todas las geometrías del portal
+            // if (portal instanceof Node) {
+            //     Node portalNode = (Node) portal;
+            //     for (Spatial child : portalNode.getChildren()) {
+            //         if (child instanceof Geometry) {
+            //             ((Geometry) child).setMaterial(portalMaterial);
+            //         }
+            //     }
+            // }
+            
+            // Añadir el portal a la escena
+            rootNode.attachChild(portal);
+            System.out.println("Portal añadido a la escena correctamente");
+            
+        } catch (Exception e) {
+            System.out.println("Error al cargar el modelo del portal: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+
+    // Método para manejar cuando un enemigo escapa
+    private void handleEnemyEscape(Enemy enemy) {
+        // Incrementar contador de escapados
+        escapedDemons++;
+        
+        System.out.println("¡Un " + enemy.getType().getName() + " ha escapado! Total: " + escapedDemons + "/" + MAX_ESCAPED_DEMONS);
+        
+        // Efecto visual en el portal (opcional)
+        if (portal != null) {
+            // Efecto de escala
+            portal.setLocalScale(2.5f);
+            
+            // Programar retorno al tamaño normal
+            java.util.Timer timer = new java.util.Timer();
+            timer.schedule(new java.util.TimerTask() {
+                @Override
+                public void run() {
+                    if (portal != null) {
+                        portal.setLocalScale(2.0f);
+                    }
+                }
+            }, 300);
+        }
+        
+        // Verificar condición de game over
+        if (escapedDemons >= MAX_ESCAPED_DEMONS) {
+            gameOver();
+        }
+    }
+
+    // Método para animar el portal cuando un demonio escapa
+    private void animatePortal() {
+        // Efecto simple de escalado
+        portal.setLocalScale(1.2f); // Aumentar tamaño
+        
+        // Programar para volver al tamaño normal después de un breve tiempo
+        new java.util.Timer().schedule(
+            new java.util.TimerTask() {
+                @Override
+                public void run() {
+                    // Asegurarse de ejecutar en el hilo de renderizado
+                    enqueue(() -> {
+                        if (portal != null) {
+                            portal.setLocalScale(1.0f);
+                        }
+                    });
+                }
+            }, 
+            300 // milisegundos
+        );
+    }
+
+    // Método para manejar el game over
+    private void gameOver() {
+        System.out.println("=== GAME OVER ===");
+        System.out.println("Han escapado " + escapedDemons + " demonios");
+        System.out.println("Puntuación final: " + score);
+        System.out.println("Oleada alcanzada: " + currentWave);
+        
+        // Mostrar mensaje de game over en la UI
+        gameUI.showGameOverMessage(score, currentWave);
+        
+        // Detener la generación de oleadas
+        waveInProgress = false;
+        
+        // Opcional: programar cierre del juego después de un tiempo
+        new java.util.Timer().schedule(
+            new java.util.TimerTask() {
+                @Override
+                public void run() {
+                    // Se puede cerrar la app o volver al menú principal
+                    //stop(); // Descomentar para cerrar el juego
+                }
+            }, 
+            10000 // 10 segundos para ver el mensaje
+        );
     }
 }

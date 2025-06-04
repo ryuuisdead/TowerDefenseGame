@@ -179,4 +179,48 @@ public class GameUI {
             }
         }
     }
+    
+    /**
+     * Muestra un mensaje de Game Over en la pantalla
+     * @param score Puntuación final del jugador
+     * @param wave Oleada alcanzada
+     */
+    public void showGameOverMessage(int score, int wave) {
+        BitmapFont guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
+        
+        // Panel para Game Over
+        Node gameOverPanel = new Node("GameOverPanel");
+        
+        // Título
+        BitmapText titleLabel = new BitmapText(guiFont, false);
+        titleLabel.setSize(guiFont.getCharSet().getRenderedSize() * 3f); // texto grande
+        titleLabel.setColor(ColorRGBA.Red);
+        titleLabel.setText("¡GAME OVER!");
+        titleLabel.setLocalTranslation(300, 400, 0);
+        gameOverPanel.attachChild(titleLabel);
+        
+        // Información
+        BitmapText infoLabel = new BitmapText(guiFont, false);
+        infoLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.5f);
+        infoLabel.setText("Han escapado demasiados demonios.");
+        infoLabel.setLocalTranslation(250, 350, 0);
+        gameOverPanel.attachChild(infoLabel);
+        
+        // Puntuación
+        BitmapText scoreLabel = new BitmapText(guiFont, false);
+        scoreLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.5f);
+        scoreLabel.setText("Puntuación final: " + score);
+        scoreLabel.setLocalTranslation(300, 300, 0);
+        gameOverPanel.attachChild(scoreLabel);
+        
+        // Oleada
+        BitmapText waveLabel = new BitmapText(guiFont, false);
+        waveLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.5f);
+        waveLabel.setText("Oleada alcanzada: " + wave);
+        waveLabel.setLocalTranslation(300, 250, 0);
+        gameOverPanel.attachChild(waveLabel);
+        
+        // Añadir al nodo GUI
+        guiNode.attachChild(gameOverPanel);
+    }
 }

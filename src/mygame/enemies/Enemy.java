@@ -323,7 +323,10 @@ public class Enemy extends Node {
     public boolean isAlive() { return alive; }
     public int getHealth() { return health; }
     public Vector3f getPosition() { return getLocalTranslation(); }
-    public boolean hasFinishedPath() { return currentWaypoint >= waypoints.size(); }
+    public boolean hasFinishedPath() {
+        // Asegúrate de que esta función existe y devuelve true cuando el enemigo ha llegado al final
+        return currentWaypoint >= waypoints.size();
+    }
     public EnemyType getType() { return type; }
     public int getReward() { return reward; }
 }
