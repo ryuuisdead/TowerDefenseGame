@@ -77,6 +77,8 @@ public class Main extends SimpleApplication implements ActionListener {
 
     @Override
     public void simpleInitApp() {
+        setDisplayStatView(false);
+        setDisplayFps(false);
         // Crear mapa/terreno con camino visible
         gameMap = new GameMap(assetManager);
         rootNode.attachChild(gameMap);
@@ -87,7 +89,7 @@ public class Main extends SimpleApplication implements ActionListener {
         // Configurar cámara isométrica fija para visualizar mejor el mapa completo
         cam.setLocation(new Vector3f(-12, 10, 8));
         cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
-        flyCam.setEnabled(false);
+        flyCam.setEnabled(true);
         flyCam.setMoveSpeed(15f);
         
         // Crear portal en el punto final del recorrido
@@ -437,12 +439,33 @@ public class Main extends SimpleApplication implements ActionListener {
     
     /**
      * Crea y añade un nuevo enemigo a la escena
-     * Versión modificada para testing: perros infernales aparecen desde la oleada 1
+     * Versión modificada para incluir enemigos tipo tanque desde oleada 3
      */
     private void spawnEnemy() {
-        // Seleccionar tipo de enemigo
-        boolean spawnHellhound = (FastMath.nextRandomFloat() < 0.5f);
-        EnemyType enemyType = spawnHellhound ? EnemyType.HELLHOUND : EnemyType.BASIC;
+        // Seleccionar tipo de enemigo según la oleada actual y probabilidad
+        EnemyType enemyType;
+        float random = FastMath.nextRandomFloat();
+        
+        if (currentWave >= 3) {
+            // A partir de la oleada 3, pueden aparecer tanques
+            if (random < 0.60f) { // 15% probabilidad de tanque
+                enemyType = EnemyType.TANK;
+            } else if (random < 0.10f) { // 35% probabilidad de hellhound
+                enemyType = EnemyType.HELLHOUND;
+            } else { // 50% probabilidad de zombie básico
+                enemyType = EnemyType.BASIC;
+            }
+        } else if (currentWave >= 1) {
+            // Oleadas 1-2: 50% chance de perros infernales
+            if (random < 0.5f) {
+                enemyType = EnemyType.HELLHOUND;
+            } else {
+                enemyType = EnemyType.BASIC;
+            }
+        } else {
+            // Oleada inicial: solo zombies
+            enemyType = EnemyType.BASIC;
+        }
         
         // Crear el enemigo con el tipo seleccionado
         Enemy enemy = new Enemy(assetManager, path.getWaypoints(), enemyType);
@@ -456,6 +479,9 @@ public class Main extends SimpleApplication implements ActionListener {
         
         // Actualizar contador
         enemiesSpawned++;
+        
+        // Informar sobre el tipo de enemigo generado
+        System.out.println("Generado enemigo tipo: " + enemyType.getName());
     }
     
     // Crear el portal en el punto final del camino

@@ -151,15 +151,15 @@ public class Tower extends Node {
             switch (type) {
                 case SNIPER:
                     modelPath = "Models/uploads_files_2746671_Sci-fi+Tower/uploads_files_2746671_Sci-fi+Tower.j3o";
-                    modelScale = 0.12f; // Ajustar la escala según este modelo
+                    modelScale = 0.11f; // Ajustar la escala según este modelo
                     break;
                 case RAPID:
                     modelPath = "Models/wizard tower/wizard tower.j3o"; // Por ahora usa el mismo modelo
-                    modelScale = 0.05f;
+                    modelScale = 0.06f;
                     break;
                 default: // BASIC
                     modelPath = "Models/medivialtower/medivialtower.j3o";
-                    modelScale = 0.36f;
+                    modelScale = 0.3f;
                     break;
             }
             

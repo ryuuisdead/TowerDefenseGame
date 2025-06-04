@@ -62,12 +62,12 @@ public class Enemy extends Node {
             
             if (enemyModel != null) {
                 System.out.println("¡Modelo cargado con éxito!");
-                // Ajustar la escala según el tipo - Probar diferentes escalas
+                // Ajustar la escala según el tipo
                 if (type == EnemyType.HELLHOUND) {
                     // Intentar con una escala más grande para el perro
-                    enemyModel.setLocalScale(0.9f);  // Aumentado de 0.15f a 0.5f
+                    enemyModel.setLocalScale(0.9f);
                     // Ajustar la posición vertical para asegurarse de que está sobre el suelo
-                    enemyModel.setLocalTranslation(0, 0.2f, 0);  // Elevado para que se vea
+                    enemyModel.setLocalTranslation(0, 0.2f, 0);
                     System.out.println("Aplicada escala y posición al perro infernal");
                 } else if (type == EnemyType.BASIC) {
                     // Ajustar la escala del zombie
@@ -98,6 +98,13 @@ public class Enemy extends Node {
                     }
                     
                     System.out.println("Aplicada escala y posición al zombie");
+                } else if (type == EnemyType.TANK) {
+                    // Ajustar la escala del tanque (monstruo del futuro)
+                    enemyModel.setLocalScale(0.0015f);
+                    enemyModel.setLocalTranslation(0, 0f, 0);
+                
+                    
+                    System.out.println("Aplicada escala y posición al tanque");
                 }
                 
                 // Verificar si el modelo tiene geometrías
@@ -174,6 +181,8 @@ public class Enemy extends Node {
         float healthBarHeight;
         if (type == EnemyType.HELLHOUND) {
             healthBarHeight = 2.0f; // Ajustar para hellhound
+        } else if (type == EnemyType.TANK) {
+            healthBarHeight = 3.0f; // Más alto para el tanque
         } else {
             healthBarHeight = 2.5f; // Altura para zombie
         }
@@ -315,6 +324,17 @@ public class Enemy extends Node {
             Node node = (Node) spatial;
             for (Spatial child : node.getChildren()) {
                 applyMaterialToSpatial(child, material);
+            }
+        }
+    }
+    
+    // Añade este método auxiliar en la clase Enemy:
+    private void applyMaterialRecursively(Node node, Material material) {
+        for (Spatial child : node.getChildren()) {
+            if (child instanceof Geometry) {
+                ((Geometry)child).setMaterial(material);
+            } else if (child instanceof Node) {
+                applyMaterialRecursively((Node)child, material);
             }
         }
     }
