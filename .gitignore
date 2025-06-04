@@ -49,9 +49,5 @@ ehthumbs.db
 Thumbs.db
 
 # JMonkeyEngine specific
-assets/Sounds/
-assets/Scenes/
-assets/Models/
-assets/Materials/
 build/
 dist/
