@@ -155,7 +155,7 @@ public class Main extends SimpleApplication implements ActionListener {
         
         // Posicionar en una esquina de la pantalla (coordenadas 2D)
         // Por ejemplo, en la esquina inferior derecha
-        towerIndicator.setLocalTranslation(700, 100, 0);
+        towerIndicator.setLocalTranslation(550, 80, 0);
         
         // Ajustar escala para que se vea bien en la GUI
         towerIndicator.setLocalScale(50); // Más grande para GUI
