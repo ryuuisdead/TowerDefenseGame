@@ -43,7 +43,7 @@ public class GameMap extends Node {
         groundGeom.setMaterial(groundMat);
         this.attachChild(groundGeom);
         
-        // Crear camino (cubos naranjas)
+        // Crear camino visible
         createPath(assetManager);
         
         // Crear cielo con textura
@@ -74,31 +74,38 @@ public class GameMap extends Node {
     }
     
     private void createPath(AssetManager assetManager) {
-        // El camino será en forma de zigzag
-        int[][] pathCoords = {
-            {0, 1}, {1, 1}, {2, 1}, {3, 1}, {3, 2}, {3, 3}, {3, 4}, 
-            {2, 4}, {1, 4}, {1, 5}, {1, 6}, {1, 7}, {2, 7}, {3, 7}, 
-            {4, 7}, {5, 7}, {6, 7}, {7, 7}, {8, 7}, {9, 7}
-        };
-        
         Node pathNode = new Node("Path");
         
-        // for (int[] coord : pathCoords) {
-        //     Box tile = new Box(TILE_SIZE/2, 0.1f, TILE_SIZE/2);
-        //     Geometry tileGeom = new Geometry("PathTile", tile);
-        //     Material tileMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        //     tileMat.setColor("Color", ColorRGBA.Black); // Naranja oscuro para el camino
-        //     tileGeom.setMaterial(tileMat);
+        // Crear una instancia de Path para obtener las coordenadas
+        Path pathCalculator = new Path();
+        int[][] pathCoords = pathCalculator.getPathCoordinates();
+        
+        // Crear material para el camino
+        Material pathMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        
+        // Cargar textura para el camino
+        Texture pathTexture = assetManager.loadTexture("Textures/path1.jpg");
+        pathTexture.setWrap(WrapMode.Repeat);
+        pathMat.setTexture("ColorMap", pathTexture);
+        
+        // Alternativa: usar un color sólido
+        // pathMat.setColor("Color", new ColorRGBA(0.6f, 0.4f, 0.2f, 1f)); // Color marrón para el camino
+        
+        for (int[] coord : pathCoords) {
+            // Crear una "baldosa" para cada posición del camino
+            Box tile = new Box(TILE_SIZE/2, 0.05f, TILE_SIZE/2);
+            Geometry tileGeom = new Geometry("PathTile", tile);
+            tileGeom.setMaterial(pathMat);
             
-        //     // Posicionamos un poco más arriba que el suelo base
-        //     tileGeom.setLocalTranslation(
-        //         (coord[0] - MAP_SIZE/2 + 0.5f) * TILE_SIZE, 
-        //         PATH_Y, 
-        //         (coord[1] - MAP_SIZE/2 + 0.5f) * TILE_SIZE
-        //     );
+            // Posicionar la baldosa
+            tileGeom.setLocalTranslation(
+                coord[0], 
+                PATH_Y, 
+                coord[1]
+            );
             
-        //     pathNode.attachChild(tileGeom);
-        // }
+            pathNode.attachChild(tileGeom);
+        }
         
         this.attachChild(pathNode);
     }

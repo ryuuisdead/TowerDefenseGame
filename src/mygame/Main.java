@@ -70,17 +70,17 @@ public class Main extends SimpleApplication implements ActionListener {
 
     @Override
     public void simpleInitApp() {
-        // Crear mapa/terreno
+        // Crear mapa/terreno con camino visible
         gameMap = new GameMap(assetManager);
         rootNode.attachChild(gameMap);
 
-        // Crear camino para enemigos
+        // Crear instancia del camino para la lógica del juego
         path = new Path();
         
-        // Configurar cámara isométrica fija
-        cam.setLocation(new Vector3f(8, 12, 12));
+        // Configurar cámara isométrica fija para visualizar mejor el mapa completo
+        cam.setLocation(new Vector3f(0, 15, 15));
         cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
-        flyCam.setEnabled(true);
+        flyCam.setEnabled(false);
         
         // Colocar una torre inicialmente - CORREGIR ESTA LÍNEA
         Tower tower = new Tower(assetManager, new Vector3f(2, 0.5f, 3), TowerType.BASIC);
@@ -278,26 +278,20 @@ public class Main extends SimpleApplication implements ActionListener {
         }
     }
     
+    // Actualizar el método isValidTowerPosition
     private boolean isValidTowerPosition(Vector3f position) {
         // Redondear a la posición de la cuadrícula
         int gridX = Math.round(position.x);
         int gridZ = Math.round(position.z);
         
         // Verificar si está en los límites del mapa
-        if (gridX < -4 || gridX > 4 || gridZ < -4 || gridZ > 4) {
+        if (gridX < -9 || gridX > 9 || gridZ < -9 || gridZ > 9) {
             return false;
         }
         
-        // Verificar si está en el camino
-        int[][] pathTiles = path.getPathCoordinates();
-        for (int[] tile : pathTiles) {
-            // Convertir coordenadas del mundo a coordenadas del mapa
-            int mapX = gridX + GameMap.MAP_SIZE/2;
-            int mapZ = gridZ + GameMap.MAP_SIZE/2;
-            
-            if (tile[0] == mapX && tile[1] == mapZ) {
-                return false;
-            }
+        // Verificar si está en el camino - Aquí usamos el nuevo método isOnPath
+        if (path.isOnPath(gridX, gridZ)) {
+            return false;
         }
         
         // Verificar si ya hay una torre en esta posición
@@ -433,23 +427,21 @@ public class Main extends SimpleApplication implements ActionListener {
      * Versión modificada para testing: perros infernales aparecen desde la oleada 1
      */
     private void spawnEnemy() {
-        // MODIFICACIÓN TEMPORAL PARA TESTING:
-        // Fijar una probabilidad del 50% de generar perros infernales desde la oleada 1
+        // Seleccionar tipo de enemigo
         boolean spawnHellhound = (FastMath.nextRandomFloat() < 0.5f);
-        
-        // Seleccionar tipo de enemigo según la probabilidad
         EnemyType enemyType = spawnHellhound ? EnemyType.HELLHOUND : EnemyType.BASIC;
         
         // Crear el enemigo con el tipo seleccionado
         Enemy enemy = new Enemy(assetManager, path.getWaypoints(), enemyType);
+        
+        // Colocar el enemigo en el inicio del camino (primer waypoint)
+        enemy.setLocalTranslation(path.getWaypoints().get(0));
+        
+        // Añadir a la escena
         enemies.add(enemy);
         rootNode.attachChild(enemy);
         
         // Actualizar contador
         enemiesSpawned++;
-        
-        // COMENTARIO: Esta es una modificación temporal para testing.
-        // La versión original que usa la progresión basada en oleadas es:
-        // boolean spawnHellhound = (currentWave > 3) && (FastMath.nextRandomFloat() < 0.3f + (currentWave * 0.05f));
     }
 }

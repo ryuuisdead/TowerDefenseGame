@@ -65,13 +65,13 @@ public class Enemy extends Node {
                 // Ajustar la escala según el tipo - Probar diferentes escalas
                 if (type == EnemyType.HELLHOUND) {
                     // Intentar con una escala más grande para el perro
-                    enemyModel.setLocalScale(1.2f);  // Aumentado de 0.15f a 0.5f
+                    enemyModel.setLocalScale(0.9f);  // Aumentado de 0.15f a 0.5f
                     // Ajustar la posición vertical para asegurarse de que está sobre el suelo
                     enemyModel.setLocalTranslation(0, 0.2f, 0);  // Elevado para que se vea
                     System.out.println("Aplicada escala y posición al perro infernal");
                 } else if (type == EnemyType.BASIC) {
                     // Ajustar la escala del zombie
-                    enemyModel.setLocalScale(0.019f);
+                    enemyModel.setLocalScale(0.015f);
                     enemyModel.setLocalTranslation(0, 0.0f, 0);
                     
                     // Aplicar textura de lava al zombie
