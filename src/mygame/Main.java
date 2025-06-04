@@ -25,6 +25,9 @@ import mygame.ui.GameUI;
 import com.jme3.material.Material; // Añadir esta importación
 import com.jme3.scene.Node;
 import com.jme3.math.ColorRGBA;
+// Añade esta importación al inicio del archivo, junto con las otras importaciones
+import com.jme3.texture.Texture;
+import com.jme3.texture.Texture.WrapMode;
 
 
 
@@ -475,26 +478,14 @@ public class Main extends SimpleApplication implements ActionListener {
             
             // Posicionar el portal al final del camino, ligeramente elevado
             portal.setLocalTranslation(portalPosition.x, 1.0f, portalPosition.z);
-
             
             // Rotar el portal con un Quaternion para mayor precisión
             com.jme3.math.Quaternion rotation = new com.jme3.math.Quaternion();
             rotation.fromAngles(0, -FastMath.PI * 2.5f, 0);  // 1.5π = 270 grados
             portal.setLocalRotation(rotation);
             
-            // // Añadir material para hacerlo destacar
-            // Material portalMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-            // portalMaterial.setColor("Color", new ColorRGBA(0.7f, 0.2f, 0.9f, 1.0f)); // Color púrpura
-            
-            // // Aplicar material a todas las geometrías del portal
-            // if (portal instanceof Node) {
-            //     Node portalNode = (Node) portal;
-            //     for (Spatial child : portalNode.getChildren()) {
-            //         if (child instanceof Geometry) {
-            //             ((Geometry) child).setMaterial(portalMaterial);
-            //         }
-            //     }
-            // }
+            // Aplicar texturas al modelo del portal
+            applyPortalTextures(portal);
             
             // Añadir el portal a la escena
             rootNode.attachChild(portal);
@@ -503,6 +494,110 @@ public class Main extends SimpleApplication implements ActionListener {
         } catch (Exception e) {
             System.out.println("Error al cargar el modelo del portal: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Aplica colores sólidos a las diferentes partes del portal
+     * (Versión simplificada mientras se resuelven problemas de texturas)
+     */
+    private void applyPortalTextures(Spatial portalModel) {
+        if (!(portalModel instanceof Node)) {
+            return;
+        }
+        
+        Node portalNode = (Node) portalModel;
+        
+        try {
+            // Cargar texturas
+            Texture frameMetalAlbedo = assetManager.loadTexture("Textures/portal_textures/frame_metal_albedo.png");
+            Texture portalAlbedo = assetManager.loadTexture("Textures/portal_textures/portal_albedo.png");
+            Texture mossyBricksAlbedo = assetManager.loadTexture("Textures/portal_textures/mossy_bricks_albedo.png");
+            Texture torchMetal = assetManager.loadTexture("Textures/portal_textures/torch_metal.png");
+            Texture torchLight = assetManager.loadTexture("Textures/portal_textures/torch_light2.png");
+            
+            // Crear materiales texturizados
+            Material frameMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            frameMaterial.setTexture("ColorMap", frameMetalAlbedo);
+            // Añadir un tinte oscuro al marco del portal
+            frameMaterial.setColor("Color", new ColorRGBA(0.4f, 0.4f, 0.5f, 1.0f));
+            
+            // Mejorar el material del portal central con color más intenso
+            Material portalMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            portalMaterial.setTexture("ColorMap", portalAlbedo);
+            // Añadir color púrpura brillante además de la textura para hacerlo más visible
+            portalMaterial.setColor("Color", new ColorRGBA(0.8f, 0.2f, 0.9f, 0.7f));
+            portalMaterial.getAdditionalRenderState().setBlendMode(com.jme3.material.RenderState.BlendMode.Alpha);
+            
+            Material brickMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            brickMaterial.setTexture("ColorMap", mossyBricksAlbedo);
+            
+            Material torchBaseMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            torchBaseMaterial.setTexture("ColorMap", torchMetal);
+            
+            Material torchLightMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            torchLightMaterial.setTexture("ColorMap", torchLight);
+            // Añadir brillo naranja/amarillo para las llamas
+            torchLightMaterial.setColor("Color", new ColorRGBA(1.0f, 0.6f, 0.0f, 1.0f));
+            
+            // Matriz de materiales para aplicar por orden
+            Material[] materials = {
+                brickMaterial,    // geom-0: Base/piedras
+                frameMaterial,    // geom-1: Marco metálico
+                portalMaterial,   // geom-2: Portal central
+                torchBaseMaterial,// geom-3: Antorcha base
+                torchLightMaterial,// geom-4: Antorcha luz
+                frameMaterial,    // geom-5: Marco superior
+                brickMaterial,    // geom-6: Detalles de piedra
+                torchBaseMaterial,// geom-7: Otra antorcha base
+                torchLightMaterial,// geom-8: Otra antorcha luz
+                brickMaterial     // geom-9: Más detalles de piedra
+            };
+            
+            // Aplicar texturas específicas a cada geometría según su índice
+            for (int i = 0; i < portalNode.getChildren().size(); i++) {
+                if (i < materials.length) {
+                    applyMaterialToSpatial(portalNode.getChild(i), materials[i]);
+                } else {
+                    // Para cualquier geometría adicional
+                    applyMaterialToSpatial(portalNode.getChild(i), frameMaterial);
+                }
+            }
+            
+            // Asegurar que el portal central tenga el material correcto
+            // Generalmente es el índice 2, pero comprobemos el nombre
+            for (int i = 0; i < portalNode.getChildren().size(); i++) {
+                String name = portalNode.getChild(i).getName().toLowerCase();
+                if (name.contains("portal") || name.contains("energy") || name.contains("center") || i == 2) {
+                    // Aplicar un material de portal mejorado
+                    Material enhancedPortalMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                    enhancedPortalMaterial.setTexture("ColorMap", portalAlbedo);
+                    enhancedPortalMaterial.setColor("Color", new ColorRGBA(0.8f, 0.2f, 0.9f, 0.7f));
+                    enhancedPortalMaterial.getAdditionalRenderState().setBlendMode(com.jme3.material.RenderState.BlendMode.Alpha);
+                    
+                    applyMaterialToSpatial(portalNode.getChild(i), enhancedPortalMaterial);
+                    System.out.println("Aplicado material de portal mejorado al nodo: " + portalNode.getChild(i).getName());
+                }
+            }
+            
+            System.out.println("Texturas aplicadas al portal con éxito");
+            
+        } catch (Exception e) {
+            System.out.println("Error al aplicar texturas al portal: " + e.getMessage());
+            e.printStackTrace();
+            
+        }
+    }
+
+    // Método para aplicar material a todas las geometrías en un spatial
+    private void applyMaterialToSpatial(Spatial spatial, Material material) {
+        if (spatial instanceof Geometry) {
+            ((Geometry) spatial).setMaterial(material);
+        } else if (spatial instanceof Node) {
+            Node node = (Node) spatial;
+            for (Spatial child : node.getChildren()) {
+                applyMaterialToSpatial(child, material);
+            }
         }
     }
     
