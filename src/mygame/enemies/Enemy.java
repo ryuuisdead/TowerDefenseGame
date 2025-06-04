@@ -10,177 +10,151 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
+import com.jme3.texture.Texture;
 import java.util.List;
 
 public class Enemy extends Node {
     
-    private static final float SPEED = 1.5f;
-    private static final float SIZE = 0.3f;
+    // Constantes
+    public static final float SIZE = 0.4f; // Tamaño del enemigo (si es un cubo)
     
-    private List<Vector3f> waypoints;
-    private int currentWaypoint = 0;
-    private int maxHealth = 200;
-    private int health = 200;
+    // Variables de estado
+    private int health;
+    private int maxHealth;
     private boolean alive = true;
-    private Geometry enemyGeom; // Mantener para compatibilidad con daño
+    private int currentWaypoint = 0;
+    private List<Vector3f> waypoints;
+    private float speed;
+    private EnemyType type;
+    private int reward; // Recompensa al matar
     
     // Modelo 3D
-    private Spatial zombieModel;
-    private boolean useModel = true;
+    private Spatial enemyModel;
+    private Geometry enemyGeom; // Para cuando usamos un cubo
+    private boolean useModel = true; // Por defecto intentamos usar un modelo 3D
     
-    // Geometrías para la barra de salud
+    // Barra de salud
+    private Node healthBarNode;
     private Geometry healthBarBg;
     private Geometry healthBarFg;
-    private Node healthBarNode;
     
-    // Mantener referencia al AssetManager para crear materiales
+    // Añade esta variable miembro para almacenar el AssetManager
     private AssetManager assetManager;
     
-    public Enemy(AssetManager assetManager, List<Vector3f> waypoints) {
-        this.assetManager = assetManager; // Guardar referencia
-        this.waypoints = waypoints;
+    /**
+     * Constructor para crear un enemigo con un tipo específico
+     */
+    public Enemy(AssetManager assetManager, List<Vector3f> path, EnemyType enemyType) {
+        this.assetManager = assetManager;  // Guardar referencia
+        this.waypoints = path;
+        this.type = enemyType;
+        this.health = enemyType.getHealth();
+        this.maxHealth = enemyType.getHealth();
+        this.speed = enemyType.getSpeed();
+        this.reward = enemyType.getReward();
         
-        if (useModel) {
-            try {
-                // Cargar el modelo de zombie
-                zombieModel = assetManager.loadModel("Models/Zombie Agonizing/ZombieAgonizing.j3o");
+        // Intentar cargar el modelo 3D
+        try {
+            String modelPath = enemyType.getModelPath();
+            System.out.println("Intentando cargar modelo desde: " + modelPath);
+            
+            enemyModel = assetManager.loadModel(modelPath);
+            
+            if (enemyModel != null) {
+                System.out.println("¡Modelo cargado con éxito!");
+                // Ajustar la escala según el tipo - Probar diferentes escalas
+                if (type == EnemyType.HELLHOUND) {
+                    // Intentar con una escala más grande para el perro
+                    enemyModel.setLocalScale(1.2f);  // Aumentado de 0.15f a 0.5f
+                    // Ajustar la posición vertical para asegurarse de que está sobre el suelo
+                    enemyModel.setLocalTranslation(0, 0.2f, 0);  // Elevado para que se vea
+                    System.out.println("Aplicada escala y posición al perro infernal");
+                } else if (type == EnemyType.BASIC) {
+                    // Ajustar la escala del zombie
+                    enemyModel.setLocalScale(0.019f);
+                    enemyModel.setLocalTranslation(0, 0.0f, 0);
+                    
+                    // Aplicar textura de lava al zombie
+                    try {
+                        // Crear un nuevo material para el zombie
+                        Material zombieMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                        
+                        // Cargar la textura
+                        Texture zombieTexture = assetManager.loadTexture("Textures/zombie_textures/lava.jpg");
+                        
+                        // Configurar parámetros de la textura para mejor calidad
+                        zombieTexture.setAnisotropicFilter(8);
+                        zombieTexture.setMagFilter(Texture.MagFilter.Bilinear);
+                        
+                        // Aplicar la textura al material
+                        zombieMaterial.setTexture("ColorMap", zombieTexture);
+                        
+                        // Aplicar el material al modelo del zombie
+                        applyMaterialToSpatial(enemyModel, zombieMaterial);
+                        
+                        System.out.println("Textura de lava aplicada al zombie");
+                    } catch (Exception e) {
+                        System.out.println("Error al aplicar textura al zombie: " + e.getMessage());
+                    }
+                    
+                    System.out.println("Aplicada escala y posición al zombie");
+                }
                 
-                // Ajustar escala del modelo (experimenta con estos valores)
-                float scale = 0.015f; // Ajusta según el tamaño deseado
-                zombieModel.scale(scale);
+                // Verificar si el modelo tiene geometrías
+                if (enemyModel instanceof Node) {
+                    Node modelNode = (Node) enemyModel;
+                    System.out.println("El modelo tiene " + modelNode.getQuantity() + " hijos");
+                    // Si no tiene hijos, podría ser un nodo vacío
+                    if (modelNode.getQuantity() == 0) {
+                        System.out.println("ADVERTENCIA: El modelo parece estar vacío");
+                        createCubeModel(assetManager, type.getColor());
+                        useModel = false;
+                    }
+                }
                 
-                // Ajustar posición vertical si es necesario
-                zombieModel.setLocalTranslation(0, -0.3f, 0); // Ajustar para que "camine" en el suelo
-                
-                // Rotar el modelo para que mire hacia adelante por defecto
-                Quaternion rotation = new Quaternion();
-                rotation.fromAngleAxis(FastMath.PI, Vector3f.UNIT_Y); // Rotar 180° si es necesario
-                zombieModel.setLocalRotation(rotation);
-                
-                // Añadir el modelo al nodo del enemigo
-                this.attachChild(zombieModel);
-                
-                // Aplicar texturas al modelo de zombie
-                applyZombieTextures();
-                
-                // Crear una geometría invisible para mantener compatibilidad con el sistema de daño
-                Box invisibleBox = new Box(SIZE, SIZE, SIZE);
-                enemyGeom = new Geometry("InvisibleEnemy", invisibleBox);
-                Material invisibleMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-                invisibleMat.setColor("Color", new ColorRGBA(1f, 0f, 0f, 0f)); // Transparente
-                enemyGeom.setMaterial(invisibleMat);
-                enemyGeom.setCullHint(Spatial.CullHint.Always); // Hacer invisible
-                this.attachChild(enemyGeom);
-                
-                System.out.println("Modelo de zombie cargado correctamente");
-                
-            } catch (Exception e) {
-                System.out.println("Error cargando modelo de zombie: " + e.getMessage());
-                e.printStackTrace();
-                useModel = false;
-                createBasicEnemy(assetManager);
+                this.attachChild(enemyModel);
+                useModel = true;
             }
-        } else {
-            createBasicEnemy(assetManager);
+        } catch (Exception e) {
+            System.out.println("Error al cargar modelo: " + e.getMessage());
+            e.printStackTrace();
+            // Fallback a un cubo básico si no se puede cargar el modelo
+            createCubeModel(assetManager, enemyType.getColor());
+            useModel = false;
+        }
+        
+        // Posicionar en el inicio del camino
+        if (waypoints != null && !waypoints.isEmpty()) {
+            Vector3f startPos = waypoints.get(0);
+            this.setLocalTranslation(startPos);
         }
         
         // Crear barra de salud
         createHealthBar(assetManager);
-        
-        // Posicionar al enemigo en el primer waypoint
-        if (!waypoints.isEmpty()) {
-            this.setLocalTranslation(waypoints.get(0));
-        }
     }
     
     /**
-     * Aplica las texturas del zombie desde la carpeta zombie_textures
+     * Método auxiliar para crear un modelo de cubo si no se puede cargar el modelo 3D
      */
-    private void applyZombieTextures() {
-        try {
-            System.out.println("Aplicando texturas de zombie...");
-            
-            // Imprimir la estructura del modelo para ver cómo está organizado
-            printModelHierarchy(zombieModel, "");
-            
-            // Crear material con texturas de zombie
-            Material zombieMaterial = createZombieMaterial();
-            
-            // Aplicar el material a todas las geometrías del modelo
-            applyMaterialToSpatial(zombieModel, zombieMaterial);
-            
-            System.out.println("Texturas de zombie aplicadas correctamente");
-            
-            // DIAGNÓSTICO: Verificar qué material se aplicó realmente
-            checkAppliedMaterials(zombieModel, "");
-            
-        } catch (Exception e) {
-            System.out.println("Error aplicando texturas de zombie: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-    
-    /**
-     * Método temporal para diagnosticar qué materiales se aplicaron
-     */
-    private void checkAppliedMaterials(Spatial spatial, String indent) {
-        if (spatial instanceof Geometry) {
-            Geometry geom = (Geometry) spatial;
-            Material mat = geom.getMaterial();
-            System.out.println(indent + geom.getName() + " tiene material: " + mat.getMaterialDef().getName());
-        } else if (spatial instanceof Node) {
-            Node node = (Node) spatial;
-            for (Spatial child : node.getChildren()) {
-                checkAppliedMaterials(child, indent + "  ");
-            }
-        }
-    }
-    
-    /**
-     * Crea un material con lava.jpg (versión sin try-catch)
-     */
-    private Material createZombieMaterial() {
-        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        
-        // Cargar la textura directamente sin try-catch
-        com.jme3.texture.Texture lavaTexture = assetManager.loadTexture("Textures/zombie_textures/lava.jpg");
-        lavaTexture.setWrap(com.jme3.texture.Texture.WrapMode.Repeat);
-        mat.setTexture("ColorMap", lavaTexture);
-        
-        System.out.println("✓ Textura de lava aplicada al zombie");
-        
-        return mat;
-    }
-    
-    /**
-     * Imprime la jerarquía del modelo para depuración
-     */
-    private void printModelHierarchy(Spatial spatial, String indent) {
-        System.out.println(indent + spatial.getName() + " (" + spatial.getClass().getSimpleName() + ")");
-        if (spatial instanceof Node) {
-            for (Spatial child : ((Node) spatial).getChildren()) {
-                printModelHierarchy(child, indent + "  ");
-            }
-        }
-    }
-    
-    private void createBasicEnemy(AssetManager assetManager) {
-        // Crear cubo rojo como respaldo
+    private void createCubeModel(AssetManager assetManager, ColorRGBA color) {
         Box box = new Box(SIZE, SIZE, SIZE);
-        enemyGeom = new Geometry("Enemy", box);
+        enemyGeom = new Geometry("EnemyBox", box);
         Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat.setColor("Color", ColorRGBA.Red);
+        mat.setColor("Color", color);
         enemyGeom.setMaterial(mat);
         this.attachChild(enemyGeom);
     }
     
+    /**
+     * Crea la barra de salud para el enemigo
+     */
     private void createHealthBar(AssetManager assetManager) {
         healthBarNode = new Node("HealthBar");
         
-        // Tamaño mejorado para las barras de salud
-        float barWidth = 0.4f;
-        float barHeight = 0.06f;
-        float barDepth = 0.04f;
+        // Tamaño para las barras de salud
+        float barWidth = 0.5f;
+        float barHeight = 0.05f;
+        float barDepth = 0.01f;
         
         // Fondo de la barra (rojo)
         Box bgBox = new Box(barWidth, barHeight, barDepth);
@@ -190,112 +164,149 @@ public class Enemy extends Node {
         healthBarBg.setMaterial(bgMat);
         
         // Barra de salud actual (verde)
-        Box fgBox = new Box(barWidth, barHeight, barDepth + 0.01f); // Ligeramente más profundo para que esté por encima
+        Box fgBox = new Box(barWidth, barHeight, barDepth + 0.001f);
         healthBarFg = new Geometry("HealthBarFg", fgBox);
         Material fgMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         fgMat.setColor("Color", ColorRGBA.Green);
         healthBarFg.setMaterial(fgMat);
         
-        // Añadir barras de salud al nodo
+        // Ajustar la posición para que la barra siempre esté por encima del enemigo
+        float healthBarHeight;
+        if (type == EnemyType.HELLHOUND) {
+            healthBarHeight = 2.0f; // Ajustar para hellhound
+        } else {
+            healthBarHeight = 2.5f; // Altura para zombie
+        }
+        
+        // Añadir barras al nodo
         healthBarNode.attachChild(healthBarBg);
         healthBarNode.attachChild(healthBarFg);
         
-        // Ajustar la posición de la barra de salud según el modelo usado
-        float healthBarHeight;
-        if (useModel) {
-            healthBarHeight = 2.5f; // Aumentado de 1.5f a 2.0f para ponerla más arriba sobre la cabeza
-        } else {
-            healthBarHeight = SIZE * 2 + 0.9f; // También aumentado para el cubo
-        }
-        
-        // Posicionamos la barra por encima del enemigo
+        // Posicionar por encima del enemigo
         healthBarNode.setLocalTranslation(0, healthBarHeight, 0);
         
         // Hacer que la barra siempre mire hacia la cámara
         healthBarNode.setLocalRotation(new Quaternion().fromAngles(FastMath.HALF_PI, 0, 0));
         
-        // Añadir barra de salud al enemigo
         this.attachChild(healthBarNode);
     }
     
+    /**
+     * Actualiza la posición del enemigo, moviéndolo a través del camino
+     */
     public void update(float tpf) {
-        if (currentWaypoint < waypoints.size()) {
-            // Movimiento hacia el siguiente waypoint
-            Vector3f targetPos = waypoints.get(currentWaypoint);
-            Vector3f currentPos = getLocalTranslation();
-            Vector3f direction = targetPos.subtract(currentPos).normalize();
-            Vector3f movement = direction.mult(SPEED * tpf);
+        if (!alive || waypoints == null || currentWaypoint >= waypoints.size()) {
+            return;
+        }
+        
+        Vector3f targetPos = waypoints.get(currentWaypoint);
+        Vector3f currentPos = getLocalTranslation();
+        Vector3f direction = targetPos.subtract(currentPos).normalizeLocal();
+        Vector3f movement = direction.mult(speed * tpf);
+        
+        // Rotar el modelo para que mire hacia donde se mueve
+        if (direction.length() > 0.1f) {
+            float angle = FastMath.atan2(direction.x, direction.z);
+            Quaternion rotation = new Quaternion();
+            rotation.fromAngleAxis(angle, Vector3f.UNIT_Y);
             
-            // Rotar el zombie para que mire hacia donde se mueve
-            if (useModel && zombieModel != null && direction.length() > 0.1f) {
-                // Calcular la rotación para que el zombie mire hacia donde va
-                float angle = FastMath.atan2(direction.x, direction.z);
-                Quaternion rotation = new Quaternion();
-                rotation.fromAngleAxis(angle, Vector3f.UNIT_Y);
-                zombieModel.setLocalRotation(rotation);
-            }
-            
-            // Mover el enemigo
-            this.move(movement);
-            
-            // Comprobar si llegó al waypoint
-            float distance = currentPos.distance(targetPos);
-            if (distance < 0.1f) {
-                currentWaypoint++;
+            if (useModel && enemyModel != null) {
+                // Para el modelo 3D
+                enemyModel.setLocalRotation(rotation);
+            } else if (enemyGeom != null) {
+                // Para el cubo
+                enemyGeom.setLocalRotation(rotation);
             }
         }
         
+        // Mover el enemigo
+        move(movement);
+        
+        // Comprobar si llegó al waypoint
+        float distance = currentPos.distance(targetPos);
+        if (distance < 0.1f) {
+            currentWaypoint++;
+        }
+        
+        // Actualizar la orientación de la barra de salud para que mire hacia la cámara
+        updateHealthBarOrientation();
     }
     
-    
-    public void takeDamage(int amount) {
-        health -= amount;
-        if (health <= 0) {
-            alive = false;
-            
-            // Aplicar efecto visual de muerte al modelo
-            if (useModel && zombieModel != null) {
-                // Hacer el zombie más oscuro cuando muere
-                applyMaterialToSpatial(zombieModel, createDeathMaterial());
-            } else {
-                // Cambiar color del cubo a gris cuando muere
-                Material mat = enemyGeom.getMaterial();
-                mat.setColor("Color", ColorRGBA.DarkGray);
-            }
-            
-            // Ocultar barra de salud cuando muere
-            healthBarNode.removeFromParent();
-        } else {
-            // Actualizar tamaño de la barra de salud
-            float healthPercent = health / (float)maxHealth;
-            
-            // Redimensionar la barra verde (parte delantera)
-            Vector3f scale = healthBarFg.getLocalScale();
-            scale.x = healthPercent;
-            healthBarFg.setLocalScale(scale);
-            
-            // Ajustar la posición de la barra según el tamaño para que se reduzca desde la derecha
-            float barWidth = 0.4f; // El mismo valor que usamos en createHealthBar
-            float offset = barWidth * (1 - healthPercent);
-            healthBarFg.setLocalTranslation(-offset, 0, 0);
-            
-            // Cambiar el color de la barra dependiendo de la salud
-            Material fgMat = healthBarFg.getMaterial();
-            if (healthPercent > 0.6f) {
-                // Verde para buena salud
-                fgMat.setColor("Color", new ColorRGBA(0.0f, 1.0f, 0.0f, 1.0f));
-            } else if (healthPercent > 0.3f) {
-                // Amarillo para salud media
-                fgMat.setColor("Color", new ColorRGBA(1.0f, 1.0f, 0.0f, 1.0f));
-            } else {
-                // Naranja para salud baja
-                fgMat.setColor("Color", new ColorRGBA(1.0f, 0.5f, 0.0f, 1.0f));
-            }
+    /**
+     * Mantiene la barra de salud siempre visible (haciendo que mire a la cámara)
+     */
+    private void updateHealthBarOrientation() {
+        if (healthBarNode != null) {
+            // Se asume una orientación fija para la barra de salud que funciona en la vista isométrica
+            Quaternion rotation = new Quaternion().fromAngles(FastMath.HALF_PI, 0, 0);
+            healthBarNode.setLocalRotation(rotation);
         }
     }
     
     /**
-     * Aplica un material a todas las geometrías de un spatial
+     * Procesa el daño recibido y actualiza la barra de salud
+     */
+    public void takeDamage(int damage) {
+        this.health -= damage;
+        
+        if (health <= 0) {
+            alive = false;
+            
+            // Efecto visual de muerte
+            if (useModel && enemyModel != null) {
+                // Para el modelo 3D podemos aplicar un material oscuro o cambiar su opacidad
+                // Usar el assetManager guardado en el objeto en lugar de obtenerlo del Light
+                Material deathMaterial = new Material(assetManager, 
+                                                     "Common/MatDefs/Misc/Unshaded.j3md");
+                deathMaterial.setColor("Color", new ColorRGBA(0.3f, 0.3f, 0.3f, 1f)); // Gris oscuro
+                applyMaterialToSpatial(enemyModel, deathMaterial);
+            } else if (enemyGeom != null) {
+                // Para el cubo simplemente cambiamos su color
+                Material mat = enemyGeom.getMaterial();
+                mat.setColor("Color", ColorRGBA.DarkGray);
+            }
+            
+            // Ocultar barra de salud
+            healthBarNode.removeFromParent();
+        } else {
+            // Actualizar barra de salud
+            updateHealthBar();
+        }
+    }
+    
+    /**
+     * Actualiza la apariencia de la barra de salud según el nivel actual
+     */
+    private void updateHealthBar() {
+        // Calcular porcentaje de salud
+        float healthPercent = health / (float)maxHealth;
+        
+        // Redimensionar la barra de salud
+        Vector3f scale = healthBarFg.getLocalScale();
+        scale.x = healthPercent;
+        healthBarFg.setLocalScale(scale);
+        
+        // Ajustar posición para que se reduzca de manera correcta
+        float barWidth = 0.5f; // El mismo que usamos en createHealthBar
+        float offset = barWidth * (1 - healthPercent);
+        healthBarFg.setLocalTranslation(-offset, 0, 0);
+        
+        // Cambiar color según el nivel de salud
+        Material fgMat = healthBarFg.getMaterial();
+        if (healthPercent > 0.6f) {
+            // Verde para buena salud
+            fgMat.setColor("Color", new ColorRGBA(0.0f, 1.0f, 0.0f, 1.0f));
+        } else if (healthPercent > 0.3f) {
+            // Amarillo para salud media
+            fgMat.setColor("Color", new ColorRGBA(1.0f, 1.0f, 0.0f, 1.0f));
+        } else {
+            // Naranja para salud baja
+            fgMat.setColor("Color", new ColorRGBA(1.0f, 0.5f, 0.0f, 1.0f));
+        }
+    }
+    
+    /**
+     * Aplica un material a todas las geometrías en un spatial
      */
     private void applyMaterialToSpatial(Spatial spatial, Material material) {
         if (spatial instanceof Geometry) {
@@ -308,50 +319,11 @@ public class Enemy extends Node {
         }
     }
     
-    /**
-     * Crea un material para cuando el zombie recibe daño
-     */
-    private Material createDamageMaterial(float healthPercent) {
-        // Usar la referencia del AssetManager guardada
-        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        
-        // Intensidad del tinte rojo basada en el daño recibido
-        float redIntensity = 1.0f - healthPercent;
-        ColorRGBA damageColor = new ColorRGBA(1f, 1f - redIntensity * 0.5f, 1f - redIntensity * 0.5f, 1f);
-        mat.setColor("Color", damageColor);
-        
-        return mat;
-    }
-    
-    /**
-     * Crea un material para cuando el zombie muere
-     */
-    private Material createDeathMaterial() {
-        // Usar la referencia del AssetManager guardada
-        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat.setColor("Color", new ColorRGBA(0.3f, 0.3f, 0.3f, 1f)); // Gris oscuro
-        return mat;
-    }
-    
-    // Métodos sin cambios
-    public boolean isAlive() {
-        return alive;
-    }
-    
-    public boolean hasFinishedPath() {
-        return currentWaypoint >= waypoints.size();
-    }
-    
-    public Vector3f getPosition() {
-        return getWorldTranslation();
-    }
-    
-    public int getHealth() {
-        return health;
-    }
-    
-    public void setMaxHealth(int maxHealth) {
-        this.maxHealth = maxHealth;
-        this.health = maxHealth;
-    }
+    // Getters
+    public boolean isAlive() { return alive; }
+    public int getHealth() { return health; }
+    public Vector3f getPosition() { return getLocalTranslation(); }
+    public boolean hasFinishedPath() { return currentWaypoint >= waypoints.size(); }
+    public EnemyType getType() { return type; }
+    public int getReward() { return reward; }
 }

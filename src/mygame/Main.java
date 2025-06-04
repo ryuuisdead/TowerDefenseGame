@@ -6,6 +6,7 @@ import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
+import com.jme3.math.FastMath;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
@@ -13,8 +14,10 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Spatial;
 import com.jme3.system.AppSettings;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import mygame.enemies.Enemy;
+import mygame.enemies.EnemyType;
 import mygame.map.GameMap;
 import mygame.map.Path;
 import mygame.towers.Tower;
@@ -425,19 +428,28 @@ public class Main extends SimpleApplication implements ActionListener {
         System.out.println("¡Comienza la oleada " + currentWave + "!");
     }
     
+    /**
+     * Crea y añade un nuevo enemigo a la escena
+     * Versión modificada para testing: perros infernales aparecen desde la oleada 1
+     */
     private void spawnEnemy() {
-        Enemy enemy = new Enemy(assetManager, path.getWaypoints());
+        // MODIFICACIÓN TEMPORAL PARA TESTING:
+        // Fijar una probabilidad del 50% de generar perros infernales desde la oleada 1
+        boolean spawnHellhound = (FastMath.nextRandomFloat() < 0.5f);
         
-        // Ajustar la salud del enemigo según la oleada actual
-        int baseHealth = 100;
-        int waveBonus = (currentWave - 1) * 20; // +20 de salud por cada oleada
-        int healthForThisEnemy = baseHealth + waveBonus;
-        enemy.setMaxHealth(healthForThisEnemy);
+        // Seleccionar tipo de enemigo según la probabilidad
+        EnemyType enemyType = spawnHellhound ? EnemyType.HELLHOUND : EnemyType.BASIC;
         
+        // Crear el enemigo con el tipo seleccionado
+        Enemy enemy = new Enemy(assetManager, path.getWaypoints(), enemyType);
         enemies.add(enemy);
         rootNode.attachChild(enemy);
+        
+        // Actualizar contador
         enemiesSpawned++;
         
-        System.out.println("Enemigo generado con " + healthForThisEnemy + " de salud");
+        // COMENTARIO: Esta es una modificación temporal para testing.
+        // La versión original que usa la progresión basada en oleadas es:
+        // boolean spawnHellhound = (currentWave > 3) && (FastMath.nextRandomFloat() < 0.3f + (currentWave * 0.05f));
     }
 }
