@@ -10,7 +10,7 @@ import com.jme3.font.BitmapText;
 import com.jme3.math.ColorRGBA;
 import com.jme3.scene.Node;
 import mygame.towers.TowerType;
-
+import mygame.towers.Tower;
 /**
  * Clase para gestionar los elementos de la interfaz de usuario
  */
@@ -28,6 +28,7 @@ public class GameUI {
     private Node towerSelectionPanel;
     private BitmapText[] towerButtons;
     private BitmapText towerInfoText;
+    private BitmapText upgradeInfoText;
     
     // Torre seleccionada
     private TowerType selectedTowerType = TowerType.BASIC;
@@ -66,6 +67,21 @@ public class GameUI {
         waveText.setText("Oleada: 1");
         waveText.setLocalTranslation(20, scoreText.getLocalTranslation().y + waveText.getLineHeight() + 10, 0);
         guiNode.attachChild(waveText);
+        
+        // Crear textos para información de torres y mejoras
+        towerInfoText = new BitmapText(guiFont);
+        towerInfoText.setSize(guiFont.getCharSet().getRenderedSize());
+        towerInfoText.setLocalTranslation(10, 150, 0);
+        guiNode.attachChild(towerInfoText);
+        
+        upgradeInfoText = new BitmapText(guiFont);
+        upgradeInfoText.setSize(guiFont.getCharSet().getRenderedSize());
+        upgradeInfoText.setLocalTranslation(10, 130, 0);
+        guiNode.attachChild(upgradeInfoText);
+        
+        // Ocultar inicialmente
+        towerInfoText.setText("");
+        upgradeInfoText.setText("");
     }
     
     private void createTowerSelectionPanel() {
@@ -222,5 +238,42 @@ public class GameUI {
         
         // Añadir al nodo GUI
         guiNode.attachChild(gameOverPanel);
+    }
+    
+    // Método para mostrar información de la torre seleccionada
+    public void showTowerInfo(Tower tower) {
+        if (tower == null) {
+            towerInfoText.setText("");
+            upgradeInfoText.setText("");
+            return;
+        }
+        
+        TowerType type = tower.getTowerType();
+        int level = tower.getLevel();
+        
+        // Mostrar información básica de la torre
+        towerInfoText.setText(String.format("%s (Nivel %d)\nDaño: %d\nVelocidad: %.2f\nAlcance: %.1f",
+                                           type.getName(), level,
+                                           tower.getDamage(),
+                                           tower.getFireRate(),
+                                           tower.getRange()));
+        
+        // Mostrar información de mejora si está disponible
+        if (tower.canUpgrade()) {
+            int upgradeCost = tower.getUpgradeCost();
+            int nextLevel = level + 1;
+            
+            upgradeInfoText.setText(String.format("MEJORA (Presiona U)\nCosto: %d\nNivel %d: Daño +%d%%, Velocidad +%d%%",
+                                                 upgradeCost, nextLevel,
+                                                 (int)((type.getUpgradedDamage(nextLevel) - tower.getDamage()) * 100 / tower.getDamage()),
+                                                 (int)((type.getUpgradedFireRate(nextLevel) / tower.getFireRate() - 1) * 100)));
+        } else {
+            upgradeInfoText.setText("NIVEL MÁXIMO");
+        }
+    }
+    
+    // Método para actualizar el dinero
+    public void updateMoney(int money) {
+        moneyText.setText("Oro: " + money);
     }
 }

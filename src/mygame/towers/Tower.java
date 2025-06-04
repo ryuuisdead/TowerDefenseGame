@@ -53,14 +53,16 @@ public class Tower extends Node {
         }
     }
     
+    private int level = 0; // Nivel 0 = sin mejoras
+    private static final int MAX_LEVEL = 2; // Máximo nivel de mejora
+    
+    // Constructor modificado
     public Tower(AssetManager assetManager, Vector3f position, TowerType type) {
         this.assetManager = assetManager;
         this.towerType = type;
         
         // Configurar propiedades según el tipo
-        this.range = type.getRange();
-        this.fireRate = type.getFireRate();
-        this.damage = type.getDamage();
+        updateStats(); // Nuevo método para actualizar estadísticas basado en el nivel
         
         // Crear modelo de torre según tipo
         if (useModel) {
@@ -77,6 +79,21 @@ public class Tower extends Node {
         this.setLocalTranslation(position);
         
         System.out.println("Torre " + type.getName() + " creada en " + position);
+    }
+    
+    // Método para actualizar estadísticas basadas en el nivel
+    private void updateStats() {
+        if (level == 0) {
+            // Nivel base
+            this.range = towerType.getRange();
+            this.fireRate = towerType.getFireRate();
+            this.damage = towerType.getDamage();
+        } else {
+            // Nivel mejorado
+            this.damage = towerType.getUpgradedDamage(level);
+            this.fireRate = towerType.getUpgradedFireRate(level);
+            // El rango se mantiene igual por ahora, pero podría mejorarse también
+        }
     }
     
     private void createBasicTowerModel(TowerType type) {
@@ -438,4 +455,215 @@ public class Tower extends Node {
     public float getRange() { return range; }
     public float getFireRate() { return fireRate; }
     public int getCost() { return towerType.getCost(); }
+    
+    // Nuevos getters para el sistema de mejoras
+    public int getLevel() { return level; }
+    public int getUpgradeCost() { 
+        return towerType.getUpgradeCost(level + 1);
+    }
+    public boolean canUpgrade() {
+        return level < MAX_LEVEL && level < towerType.getMaxUpgradeLevel();
+    }
+    
+    // Método para mejorar la torre
+    public boolean upgrade() {
+        if (level >= MAX_LEVEL || level >= towerType.getMaxUpgradeLevel()) {
+            System.out.println("Esta torre ya está al nivel máximo.");
+            return false;
+        }
+        
+        level++;
+        updateStats();
+        
+        // Actualizar visual de la torre según el nivel
+        updateTowerVisual();
+        
+        System.out.println("Torre mejorada a nivel " + level + 
+                          ". Nuevo daño: " + damage + 
+                          ", Nueva cadencia: " + fireRate);
+        return true;
+    }
+    
+    // Método para actualizar el aspecto de la torre según el nivel
+    private void updateTowerVisual() {
+        // En el modelo básico, cambiamos el color según el nivel
+        if (!useModel) {
+            Material baseMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            Material topMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            
+            switch (level) {
+                case 1:
+                    // Nivel 1: Colores más intensos
+                    baseMat.setColor("Color", towerType.getBaseColor().mult(1.2f));
+                    topMat.setColor("Color", towerType.getTopColor().mult(1.2f));
+                    break;
+                case 2:
+                    // Nivel 2: Colores brillantes y escala ligeramente mayor
+                    baseMat.setColor("Color", towerType.getBaseColor().mult(1.5f));
+                    topMat.setColor("Color", towerType.getTopColor().mult(1.5f));
+                    
+                    // Aumentar un poco la escala
+                    this.setLocalScale(1.15f);
+                    break;
+            }
+            
+            // Buscar las geometrías para aplicar nuevos materiales
+            for (Spatial child : this.getChildren()) {
+                if (child instanceof Geometry) {
+                    Geometry geom = (Geometry) child;
+                    if (geom.getName().equals("TowerBase")) {
+                        geom.setMaterial(baseMat);
+                    } else if (geom.getName().equals("TowerTop")) {
+                        geom.setMaterial(topMat);
+                    }
+                }
+            }
+        } else {
+            // Para modelos 3D, podemos añadir efectos visuales según el nivel
+            // Ejemplo: aumentar un poco la escala o añadir un brillo
+            switch (level) {
+                case 1:
+                    // Nivel 1: Escala un poco mayor
+                    if (towerModel != null) {
+                        towerModel.setLocalScale(towerModel.getLocalScale().mult(1.1f));
+                    }
+                    break;
+                case 2:
+                    // Nivel 2: Efecto de brillo o partículas
+                    if (towerModel != null) {
+                        // Añadir un efecto de brillo o color más intenso
+                        applyGlowEffect();
+                    }
+                    break;
+            }
+        }
+    }
+    
+    // Método para aplicar efecto de brillo a torres mejoradas al máximo
+    private void applyGlowEffect() {
+        try {
+            // Crear un nuevo material para efecto de brillo
+            Material glowMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            
+            // Definir colores brillantes según el tipo de torre
+            ColorRGBA glowColor;
+            switch (towerType) {
+                case SNIPER:
+                    glowColor = new ColorRGBA(1.0f, 0.3f, 0.3f, 1.0f); // Rojo brillante
+                    break;
+                case RAPID:
+                    glowColor = new ColorRGBA(0.3f, 1.0f, 0.3f, 1.0f); // Verde brillante
+                    break;
+                default:
+                    glowColor = new ColorRGBA(0.3f, 0.3f, 1.0f, 1.0f); // Azul brillante
+                    break;
+            }
+            
+            // Configurar el material con el color brillante
+            glowMat.setColor("Color", glowColor);
+            
+            // Aplicar el material según el tipo de modelo
+            if (towerModel instanceof Geometry) {
+                // Si el modelo es una geometría directa
+                ((Geometry) towerModel).setMaterial(glowMat);
+            } else if (towerModel instanceof Node) {
+                // Si es un modelo compuesto (Node), aplicamos a todas sus geometrías
+                applyMaterialToNode((Node) towerModel, glowMat);
+            }
+            
+            // Aumentar ligeramente la escala para efecto visual
+            towerModel.setLocalScale(towerModel.getLocalScale().mult(1.1f));
+            
+            System.out.println("Efecto de brillo aplicado a torre nivel " + level);
+        } catch (Exception e) {
+            System.out.println("No se pudo aplicar efecto de brillo: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    // Método auxiliar para aplicar un material a todas las geometrías de un nodo
+    private void applyMaterialToNode(Node node, Material material) {
+        for (Spatial child : node.getChildren()) {
+            if (child instanceof Geometry) {
+                ((Geometry) child).setMaterial(material);
+            } else if (child instanceof Node) {
+                applyMaterialToNode((Node) child, material);
+            }
+        }
+    }
+    
+    // Geometría para el destacado (selección)
+    private Geometry highlightGeometry;
+    
+    // Método para añadir un destacado visual cuando se selecciona
+    public void addHighlight(AssetManager assetManager) {
+        // Eliminar cualquier destacado existente
+        removeHighlight();
+        
+        // Crear un anillo o círculo alrededor de la torre
+        // Rotamos el cilindro para que quede horizontal (paralelo al suelo)
+        com.jme3.scene.shape.Cylinder highlightCylinder = 
+            new com.jme3.scene.shape.Cylinder(32, 32, range, 0.05f, true);
+        
+        highlightGeometry = new Geometry("TowerHighlight", highlightCylinder);
+        
+        // Material semitransparente para el destacado
+        Material highlightMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        
+        // Color según el tipo de torre con mayor transparencia (reducir valor alpha)
+        ColorRGBA highlightColor;
+        switch (towerType) {
+            case SNIPER:
+                highlightColor = new ColorRGBA(1.0f, 0.2f, 0.2f, 0.05f); // Rojo más translúcido
+                break;
+            case RAPID:
+                highlightColor = new ColorRGBA(0.2f, 1.0f, 0.2f, 0.05f); // Verde más translúcido
+                break;
+            default:
+                highlightColor = new ColorRGBA(0.2f, 0.5f, 1.0f, 0.05f); // Azul más translúcido
+                break;
+        }
+        
+        highlightMat.setColor("Color", highlightColor);
+        
+        // Configurar el renderState para una mejor transparencia
+        highlightMat.getAdditionalRenderState().setBlendMode(com.jme3.material.RenderState.BlendMode.Alpha);
+        highlightMat.getAdditionalRenderState().setDepthTest(true);
+        highlightMat.getAdditionalRenderState().setDepthWrite(false); // Importante para transparencia
+        
+        highlightGeometry.setMaterial(highlightMat);
+        highlightGeometry.setQueueBucket(com.jme3.renderer.queue.RenderQueue.Bucket.Transparent);
+        
+        // Rotar el cilindro 90 grados para que quede paralelo al suelo
+        Quaternion rotation = new Quaternion();
+        rotation.fromAngleAxis(FastMath.HALF_PI, Vector3f.UNIT_X);
+        highlightGeometry.setLocalRotation(rotation);
+        
+        // Posicionar el destacado a la altura correcta
+        // Posicionar el destacado a la altura correcta (ahora a nivel del suelo)
+        float heightOffset;
+        if (towerType == TowerType.SNIPER) {
+            heightOffset = 0.05f; // Reducido de 0.5f a 0.05f (casi a nivel del suelo)
+        } else if (towerType == TowerType.RAPID) {
+            heightOffset = 0.05f; // Reducido de 0.3f a 0.05f
+        } else {
+            heightOffset = 0.05f; // Reducido de 0.2f a 0.05f
+        }
+
+        // Añadir un mínimo desplazamiento vertical para evitar z-fighting con el terreno
+        
+        
+        // Añadir el destacado a la torre
+        this.attachChild(highlightGeometry);
+        
+        System.out.println("Añadido círculo de selección para torre " + towerType.getName());
+    }
+    
+    // Método para eliminar el destacado
+    public void removeHighlight() {
+        if (highlightGeometry != null) {
+            highlightGeometry.removeFromParent();
+            highlightGeometry = null;
+        }
+    }
 }

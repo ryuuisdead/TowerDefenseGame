@@ -63,6 +63,8 @@ public class Main extends SimpleApplication implements ActionListener {
     private Spatial portal;
     private int escapedDemons = 0;
     private final int MAX_ESCAPED_DEMONS = 5;
+    
+    private Tower selectedTower = null; // Torre seleccionada para mejorar
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -89,7 +91,7 @@ public class Main extends SimpleApplication implements ActionListener {
         // Configurar cámara isométrica fija para visualizar mejor el mapa completo
         cam.setLocation(new Vector3f(-12, 10, 8));
         cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
-        flyCam.setEnabled(true);
+        flyCam.setEnabled(false);
         flyCam.setMoveSpeed(15f);
         
         // Crear portal en el punto final del recorrido
@@ -119,6 +121,14 @@ public class Main extends SimpleApplication implements ActionListener {
         inputManager.addMapping("SelectTower1", new KeyTrigger(com.jme3.input.KeyInput.KEY_1));
         inputManager.addMapping("SelectTower2", new KeyTrigger(com.jme3.input.KeyInput.KEY_2));
         inputManager.addMapping("SelectTower3", new KeyTrigger(com.jme3.input.KeyInput.KEY_3));
+        
+        // Añadir mapeo de teclas para mejoras
+        inputManager.addMapping("UpgradeTower", new KeyTrigger(com.jme3.input.KeyInput.KEY_U));
+        inputManager.addListener(actionListener, "UpgradeTower");
+        
+        // Añadir mapeo para seleccionar torres existentes
+        inputManager.addMapping("SelectTower", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
+        inputManager.addListener(actionListener, "SelectTower");
         
         // Listener para acciones
         inputManager.addListener(actionListener, "PlaceTower", "SelectTower1", "SelectTower2", "SelectTower3");
@@ -150,6 +160,13 @@ public class Main extends SimpleApplication implements ActionListener {
                     case "SelectTower3":
                         gameUI.selectTowerType(TowerType.RAPID);
                         updateTowerIndicator();
+                        break;
+                    case "SelectTower":
+                        selectTowerAtCursor();
+                        break;
+                        
+                    case "UpgradeTower":
+                        upgradeTower();
                         break;
                 }
             }
@@ -703,5 +720,110 @@ public class Main extends SimpleApplication implements ActionListener {
             }, 
             10000 // 10 segundos para ver el mensaje
         );
+    }
+
+    private void selectTowerAtCursor() {
+        // Resetear la torre seleccionada
+        if (selectedTower != null) {
+            selectedTower.removeHighlight();
+        }
+        selectedTower = null;
+        
+        // Obtener la posición del ratón
+        Vector2f mousePos = inputManager.getCursorPosition();
+        
+        // Crear un rayo desde la cámara hacia la posición del ratón
+        Vector3f worldCoordinates = cam.getWorldCoordinates(mousePos, 0f).clone();
+        Vector3f dir = cam.getWorldCoordinates(mousePos, 1f).subtractLocal(worldCoordinates).normalizeLocal();
+        Ray ray = new Ray(worldCoordinates, dir);
+        
+        // Verificar colisión con todas las torres
+        float closestDistance = Float.MAX_VALUE;
+        Tower closestTower = null;
+        
+        for (Tower tower : towers) {
+            // Crear una colisión con un volumen alrededor de la torre
+            com.jme3.bounding.BoundingSphere boundingSphere = 
+                new com.jme3.bounding.BoundingSphere(1f, tower.getWorldTranslation());
+            CollisionResults results = new CollisionResults();
+            
+            // Verificar colisión entre el rayo y la esfera
+            boundingSphere.collideWith(ray, results);
+            
+            // Si hay colisión y es la más cercana hasta ahora
+            if (results.size() > 0 && results.getClosestCollision().getDistance() < closestDistance) {
+                closestDistance = results.getClosestCollision().getDistance();
+                closestTower = tower;
+            }
+        }
+        
+        // Si encontramos una torre cercana, seleccionarla
+        if (closestTower != null) {
+            selectedTower = closestTower;
+            
+            // Mostrar información de la torre seleccionada
+            showTowerInfo(selectedTower);
+            
+            // Añadir efecto visual para indicar selección
+            highlightSelectedTower(selectedTower);
+            
+            System.out.println("Torre seleccionada: " + selectedTower.getTowerType().getName() + 
+                              " (Nivel " + selectedTower.getLevel() + ")");
+        } else {
+            System.out.println("No se ha seleccionado ninguna torre");
+        }
+    }
+    
+    private void upgradeTower() {
+        if (selectedTower == null) {
+            System.out.println("Selecciona una torre para mejorar.");
+            return;
+        }
+        
+        // Verificar si la torre puede mejorarse
+        if (!selectedTower.canUpgrade()) {
+            System.out.println("Esta torre ya está al nivel máximo.");
+            return;
+        }
+        
+        // Obtener costo de la mejora
+        int upgradeCost = selectedTower.getUpgradeCost();
+        
+        // Verificar si hay suficiente dinero
+        if (money < upgradeCost) {
+            System.out.println("No hay suficiente dinero para mejorar. Necesitas: " + upgradeCost);
+            return;
+        }
+        
+        // Realizar la mejora
+        if (selectedTower.upgrade()) {
+            // Reducir el dinero del jugador
+            money -= upgradeCost;
+            
+            // Actualizar UI
+            gameUI.updateMoney(money);
+            
+            // Actualizar la información mostrada
+            showTowerInfo(selectedTower);
+            
+            System.out.println("¡Torre mejorada! Nivel actual: " + selectedTower.getLevel());
+        }
+    }
+    
+    private void showTowerInfo(Tower tower) {
+        // Este método debe actualizar la UI para mostrar información de la torre seleccionada
+        // Incluyendo su nivel actual, estadísticas y costo de mejora
+        gameUI.showTowerInfo(tower);
+    }
+    
+    // Método para destacar visualmente la torre seleccionada
+    private void highlightSelectedTower(Tower tower) {
+        // Eliminar cualquier destacado anterior
+        for (Tower t : towers) {
+            t.removeHighlight();
+        }
+        
+        // Añadir destacado a la torre seleccionada
+        tower.addHighlight(assetManager);
     }
 }
