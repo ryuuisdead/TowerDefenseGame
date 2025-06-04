@@ -465,6 +465,22 @@ public class Tower extends Node {
         return level < MAX_LEVEL && level < towerType.getMaxUpgradeLevel();
     }
     
+    /**
+     * Calcula la inversión total en esta torre (costo base + mejoras)
+     * @return El valor total invertido en la torre
+     */
+    public int getTotalInvestment() {
+        int baseCost = towerType.getCost();
+        int upgradeCost = 0;
+        
+        // Sumar los costos de mejora realizados
+        for (int i = 1; i <= level; i++) {
+            upgradeCost += towerType.getUpgradeCost(i);
+        }
+        
+        return baseCost + upgradeCost;
+    }
+    
     // Método para mejorar la torre
     public boolean upgrade() {
         if (level >= MAX_LEVEL || level >= towerType.getMaxUpgradeLevel()) {

@@ -258,18 +258,30 @@ public class GameUI {
                                            tower.getFireRate(),
                                            tower.getRange()));
         
+        // Crear un StringBuilder para la información de control
+        StringBuilder controlInfo = new StringBuilder();
+        
         // Mostrar información de mejora si está disponible
         if (tower.canUpgrade()) {
             int upgradeCost = tower.getUpgradeCost();
             int nextLevel = level + 1;
             
-            upgradeInfoText.setText(String.format("MEJORA (Presiona U)\nCosto: %d\nNivel %d: Daño +%d%%, Velocidad +%d%%",
-                                                 upgradeCost, nextLevel,
-                                                 (int)((type.getUpgradedDamage(nextLevel) - tower.getDamage()) * 100 / tower.getDamage()),
-                                                 (int)((type.getUpgradedFireRate(nextLevel) / tower.getFireRate() - 1) * 100)));
+            controlInfo.append(String.format("MEJORA (Presiona U)\nCosto: %d\nNivel %d: Daño +%d%%, Velocidad +%d%%\n",
+                                             upgradeCost, nextLevel,
+                                             (int)((type.getUpgradedDamage(nextLevel) - tower.getDamage()) * 100 / tower.getDamage()),
+                                             (int)((type.getUpgradedFireRate(nextLevel) / tower.getFireRate() - 1) * 100)));
         } else {
-            upgradeInfoText.setText("NIVEL MÁXIMO");
+            controlInfo.append("NIVEL MÁXIMO\n");
         }
+        
+        // Añadir información sobre cómo eliminar la torre (ahora con la tecla E)
+        controlInfo.append("\nELIMINAR TORRE (Presiona E)\n");
+        // Mostrar valor de reembolso (50% del costo total: costo base + mejoras)
+        int refundValue = (int)(tower.getTotalInvestment() * 0.5f);
+        controlInfo.append("Reembolso: $" + refundValue);
+        
+        // Actualizar el texto de información de control
+        upgradeInfoText.setText(controlInfo.toString());
     }
     
     // Método para actualizar el dinero

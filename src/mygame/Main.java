@@ -130,6 +130,10 @@ public class Main extends SimpleApplication implements ActionListener {
         inputManager.addMapping("SelectTower", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
         inputManager.addListener(actionListener, "SelectTower");
         
+        // Cambiar DeleteTower para usar la tecla E en lugar de DELETE
+        inputManager.addMapping("DeleteTower", new KeyTrigger(com.jme3.input.KeyInput.KEY_E));
+        inputManager.addListener(actionListener, "DeleteTower");
+        
         // Listener para acciones
         inputManager.addListener(actionListener, "PlaceTower", "SelectTower1", "SelectTower2", "SelectTower3");
     }
@@ -140,7 +144,7 @@ public class Main extends SimpleApplication implements ActionListener {
         towerPlacementIndicator.setCullHint(Spatial.CullHint.Always); // Oculto por defecto
         rootNode.attachChild(towerPlacementIndicator);
     }
-
+    
     private ActionListener actionListener = new ActionListener() {
         @Override
         public void onAction(String name, boolean isPressed, float tpf) {
@@ -167,6 +171,10 @@ public class Main extends SimpleApplication implements ActionListener {
                         
                     case "UpgradeTower":
                         upgradeTower();
+                        break;
+                        
+                    case "DeleteTower":
+                        deleteTower();
                         break;
                 }
             }
@@ -825,5 +833,34 @@ public class Main extends SimpleApplication implements ActionListener {
         
         // Añadir destacado a la torre seleccionada
         tower.addHighlight(assetManager);
+    }
+    
+    /**
+     * Elimina la torre actualmente seleccionada y devuelve parte del costo
+     */
+    private void deleteTower() {
+        if (selectedTower == null) {
+            System.out.println("Ninguna torre seleccionada para eliminar.");
+            return;
+        }
+        
+        // Calcular el valor de reembolso (50% del costo total)
+        int refundValue = (int)(selectedTower.getTotalInvestment() * 0.5f);
+        
+        // Eliminar la torre
+        rootNode.detachChild(selectedTower);
+        towers.remove(selectedTower);
+        
+        System.out.println("Torre eliminada. Reembolso: $" + refundValue);
+        
+        // Aumentar el dinero del jugador
+        money += refundValue;
+        
+        // Actualizar la interfaz
+        gameUI.updateMoney(money);
+        gameUI.showTowerInfo(null); // Limpiar la información de la torre
+        
+        // Limpiar la selección
+        selectedTower = null;
     }
 }
