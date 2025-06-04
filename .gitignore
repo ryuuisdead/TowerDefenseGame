@@ -38,6 +38,7 @@ nbdist/
 .project
 .classpath
 .settings/
+*.jtxt
 
 # OS generated files
 .DS_Store
@@ -51,3 +52,43 @@ Thumbs.db
 # JMonkeyEngine specific
 build/
 dist/
+
+# JMonkeyEngine specific
+/bin/
+/jme3-*/build/
+/jme3-*/bin/
+/jme3-bullet-native/bullet3.zip
+/jme3-bullet-native/bullet3-*/
+/jme3-bullet-native/src/native/cpp/com_jme3_bullet_*.h
+/jme3-android-native/openal-soft/
+/jme3-android-native/OpenALSoft.zip
+/jme3-android-native/src/native/jme_decode/STBI/
+/jme3-android-native/src/native/jme_decode/Tremor/
+/jme3-android-native/stb_image.h
+/Written Assets/
+
+# Native libraries (should be included in repo)
+# Except for VR libraries that should be included
+!jme3-vr/src/main/resources/**/*.dylib
+!jme3-vr/src/main/resources/**/*.so
+!jme3-vr/src/main/resources/**/*.so.dbg
+!jme3-vr/src/main/resources/**/*.dll
+!jme3-vr/src/main/resources/**/*.pdb
+
+# Native libraries to ignore
+*.dll
+*.so
+*.jnilib
+*.dylib
+
+# Project specific files to ignore
+/buildMaven.bat
+.travis.yml
+appveyor.yml
+javadoc_deploy
+javadoc_deploy.pub
+
+# Gradle
+/.gradle/
+/.nb-gradle/
+.gradletasknamecache
