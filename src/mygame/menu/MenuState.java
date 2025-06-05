@@ -5,6 +5,7 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.asset.AssetManager;
+import com.jme3.audio.AudioNode;
 import com.jme3.font.BitmapFont;
 import com.jme3.font.BitmapText;
 import com.jme3.input.InputManager;
@@ -12,16 +13,15 @@ import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.material.Material;
+import com.jme3.material.RenderState.BlendMode;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector2f;
+import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Quad;
 import com.jme3.system.AppSettings;
-import com.jme3.texture.Texture;
-import com.jme3.audio.AudioNode;
-import com.jme3.audio.AudioData;
-import com.jme3.audio.AudioData.DataType;
+import com.jme3.ui.Picture;
 
 /**
  * Estado de aplicación que maneja el menú principal del juego
@@ -139,40 +139,55 @@ public class MenuState extends AbstractAppState implements ActionListener {
         titleText.setLocalTranslation(titleX, titleY, 0);
         
         menuNode.attachChild(titleText);
-    }
-    
-    private void createStartButton(int width, int height) {
-        // Crear un botón de inicio (geometría rectangular)
-        Quad buttonQuad = new Quad(200, 60);
-        startButton = new Geometry("StartButton", buttonQuad);
+    }      private void createStartButton(int width, int height) {        // Crear un botón usando Picture para la imagen
+        com.jme3.ui.Picture startButtonPic = new com.jme3.ui.Picture("StartButton");
         
-        // Material para el botón
+        // Cargar la textura y configurar sus parámetros
+        com.jme3.texture.Texture2D tex = (com.jme3.texture.Texture2D) assetManager.loadTexture("Images/boton_iniciar.png");
+        tex.setMinFilter(com.jme3.texture.Texture.MinFilter.BilinearNoMipMaps);
+        tex.setMagFilter(com.jme3.texture.Texture.MagFilter.Bilinear);
+        
+        // Configurar el material para la mejor calidad
         Material buttonMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        buttonMat.setColor("Color", new ColorRGBA(0.5f, 0.2f, 0.6f, 0.8f)); // Púrpura
-        startButton.setMaterial(buttonMat);
+        buttonMat.setTexture("ColorMap", tex);
+        buttonMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
+        buttonMat.setColor("Color", new ColorRGBA(1f, 1f, 1f, 1f));
+        
+        startButtonPic.setMaterial(buttonMat);
+          // Calcular el tamaño del botón manteniendo la proporción
+        float originalAspectRatio = 1.0f; // Proporción original del botón (ancho/alto)
+        float maxDesiredWidth = width * 0.40f; // 25% del ancho de la pantalla como máximo
+        float minScreenDimension = Math.min(width, height);
+        float buttonWidth = Math.min(maxDesiredWidth, minScreenDimension * 0.25f); // Usar la dimensión más pequeña de la pantalla
+        float buttonHeight = buttonWidth / originalAspectRatio;
+        
+        // Definir área de colisión igual al área visible
+        startButton = new Geometry("StartButtonGeometry", new Quad(buttonWidth, buttonHeight));
+        
+        startButtonPic.setWidth(buttonWidth);
+        startButtonPic.setHeight(buttonHeight);
         
         // Centrar el botón horizontalmente y posicionarlo verticalmente
-        float buttonX = (width - 200) / 2;
-        float buttonY = height / 2 - 30; // A media altura de la pantalla
+        float buttonX = (width - buttonWidth) / 2;
+        float buttonY = height / 2 - buttonHeight / 2;
+        startButtonPic.setPosition(buttonX, buttonY);
+        startButtonPic.setLocalTranslation(buttonX, buttonY, 1);
+        
+        // Guardar la referencia del botón para poder usarla en otras partes
+        startButton = new Geometry("StartButtonGeometry", new Quad(buttonWidth, buttonHeight));
         startButton.setLocalTranslation(buttonX, buttonY, 0);
         
+        // Hacer el material del geometry invisible pero mantener la capacidad de detectar clicks
+        Material invisibleMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        invisibleMat.setColor("Color", new ColorRGBA(0, 0, 0, 0));
+        invisibleMat.getAdditionalRenderState().setBlendMode(com.jme3.material.RenderState.BlendMode.Alpha);
+        startButton.setMaterial(invisibleMat);
+        
+        // Guardar referencia a la imagen para las animaciones
+        startButton.setUserData("buttonPic", startButtonPic);
+        
+        menuNode.attachChild(startButtonPic);
         menuNode.attachChild(startButton);
-        
-        // Añadir texto al botón
-        BitmapFont font = assetManager.loadFont("Interface/Fonts/Default.fnt");
-        startButtonText = new BitmapText(font);
-        startButtonText.setText("INICIAR JUEGO");
-        startButtonText.setSize(font.getCharSet().getRenderedSize() * 1.5f);
-        startButtonText.setColor(ColorRGBA.White);
-        
-        // Centrar el texto en el botón
-        float textWidth = startButtonText.getLineWidth();
-        float textHeight = startButtonText.getLineHeight();
-        float textX = buttonX + (200 - textWidth) / 2;
-        float textY = buttonY + 60 + (textHeight / 2); // Ajuste para centrar verticalmente
-        startButtonText.setLocalTranslation(textX, textY, 1);
-        
-        menuNode.attachChild(startButtonText);
     }
     
     private void setupAudio() {
@@ -268,52 +283,57 @@ public class MenuState extends AbstractAppState implements ActionListener {
     /**
      * Anima el botón de inicio cuando se hace clic.
      * Crea una secuencia de animación simple con cambio de color.
-     */
-    private void animateButtonClick() {
-        // Guardar el material y color original
-        final Material buttonMat = startButton.getMaterial();
-        
-        // Obtener el color original de manera segura
-        final ColorRGBA originalColor;
-        if (buttonMat.getParam("Color") != null && 
-            buttonMat.getParam("Color").getValue() instanceof ColorRGBA) {
-            originalColor = (ColorRGBA) buttonMat.getParam("Color").getValue();
-        } else {
-            // Valor por defecto si no podemos obtener el color
-            originalColor = new ColorRGBA(0.5f, 0.2f, 0.6f, 0.8f);
-        }
+     */    private void animateButtonClick() {
+        com.jme3.ui.Picture buttonPic = (com.jme3.ui.Picture) startButton.getUserData("buttonPic");
+        if (buttonPic == null) return;
         
         // Crear un temporizador para manejar la animación
         java.util.Timer timer = new java.util.Timer();
         
-        // Primera fase: cambiar a color brillante inmediatamente
-        buttonMat.setColor("Color", new ColorRGBA(0.9f, 0.4f, 1.0f, 1.0f)); // Púrpura brillante
+        // Primera fase: reducir tamaño y cambiar opacidad
+        app.enqueue(() -> {
+            // Guardar la posición actual
+            Vector3f pos = buttonPic.getLocalTranslation();
+            
+            // Aplicar escala
+            startButton.setLocalScale(0.95f);
+            buttonPic.setLocalScale(0.95f);
+            
+            // Restaurar posición Z
+            buttonPic.setLocalTranslation(pos.x, pos.y, pos.z);
+            
+            // Aplicar transparencia
+            Material mat = buttonPic.getMaterial();
+            if (mat != null) {
+                mat.setFloat("Alpha", 0.7f);
+            }
+            return null;
+        });
         
-        // Animar también el texto
-        startButtonText.setColor(new ColorRGBA(1.0f, 1.0f, 0.8f, 1.0f)); // Amarillo claro
-        
-        // Segunda fase: cambiar ligeramente el color
+        // Segunda fase: restaurar
         timer.schedule(new java.util.TimerTask() {
             @Override
             public void run() {
                 app.enqueue(() -> {
-                    buttonMat.setColor("Color", new ColorRGBA(1.0f, 0.5f, 1.0f, 1.0f)); // Púrpura más claro
+                    // Guardar la posición actual
+                    Vector3f pos = buttonPic.getLocalTranslation();
+                    
+                    // Restaurar escala
+                    startButton.setLocalScale(1.0f);
+                    buttonPic.setLocalScale(1.0f);
+                    
+                    // Restaurar posición Z
+                    buttonPic.setLocalTranslation(pos.x, pos.y, pos.z);
+                    
+                    // Restaurar opacidad
+                    Material mat = buttonPic.getMaterial();
+                    if (mat != null) {
+                        mat.setFloat("Alpha", 1.0f);
+                    }
                     return null;
                 });
             }
-        }, 100); // después de 100ms
-        
-        // Tercera fase: volver al color original
-        timer.schedule(new java.util.TimerTask() {
-            @Override
-            public void run() {
-                app.enqueue(() -> {
-                    buttonMat.setColor("Color", originalColor);
-                    startButtonText.setColor(ColorRGBA.White);
-                    return null;
-                });
-            }
-        }, 250); // después de 250ms
+        }, 150);
     }
     
     private boolean isClickOnButton() {
@@ -334,23 +354,31 @@ public class MenuState extends AbstractAppState implements ActionListener {
                 y >= buttonY && y <= buttonY + buttonHeight);
     }
     
-    private boolean isHovering = false;
-
-    @Override
+    private boolean isHovering = false;    @Override
     public void update(float tpf) {
         super.update(tpf);
         
         // Verificar si el cursor está sobre el botón (efecto hover)
         if (isMouseOverButton()) {
             if (!isHovering) {
-                // El cursor acaba de entrar en el botón
-                isHovering = true;
-                startButton.getMaterial().setColor("Color", new ColorRGBA(0.6f, 0.3f, 0.7f, 0.9f)); // Color ligeramente más brillante
+                isHovering = true;                // El cursor acaba de entrar en el botón
+                System.out.println("Cursor sobre el botón: " + inputManager.getCursorPosition());                // El cursor acaba de entrar en el botón                isHovering = true;
+                com.jme3.ui.Picture buttonPic = (com.jme3.ui.Picture) startButton.getUserData("buttonPic");                if (buttonPic != null) {
+                    Material mat = buttonPic.getMaterial();
+                    if (mat != null) {
+                        mat.setColor("Color", new ColorRGBA(1f, 1f, 1f, 0.8f));
+                    }
+                }
             }
         } else if (isHovering) {
-            // El cursor acaba de salir del botón
-            isHovering = false;
-            startButton.getMaterial().setColor("Color", new ColorRGBA(0.5f, 0.2f, 0.6f, 0.8f)); // Color original
+            isHovering = false;            // El cursor acaba de salir del botón
+            System.out.println("Cursor fuera del botón: " + inputManager.getCursorPosition());            // El cursor acaba de salir del botón            isHovering = false;
+            com.jme3.ui.Picture buttonPic = (com.jme3.ui.Picture) startButton.getUserData("buttonPic");            if (buttonPic != null) {
+                Material mat = buttonPic.getMaterial();
+                if (mat != null) {
+                    mat.setColor("Color", new ColorRGBA(1f, 1f, 1f, 1.0f));
+                }
+            }
         }
     }
 

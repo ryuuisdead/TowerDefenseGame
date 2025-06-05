@@ -132,14 +132,12 @@ public class Main extends SimpleApplication {
      */    private void initGame() {
         // Iniciar la música del juego
         setupGameMusic();
-        
-        // Crear mapa/terreno con camino visible
+          // Crear mapa/terreno con camino visible
         gameMap = new GameMap(assetManager);
-        rootNode.attachChild(gameMap);        // Crear instancia del camino para la lógica del juego
-        path = new Path();
+        rootNode.attachChild(gameMap);
         
-        // Crear indicadores visuales para los spots válidos de torres
-        createTowerSpotIndicators();
+        // Crear instancia del camino para la lógica del juego
+        path = new Path();
         
         // Configurar cámara isométrica fija para visualizar mejor el mapa completo
         cam.setLocation(new Vector3f(-12, 10, 8));
