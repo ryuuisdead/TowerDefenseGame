@@ -28,7 +28,7 @@ public class GameMap extends Node {
     public static final float TILE_SIZE = 1.0f;
     public static final float PATH_Y = 0.1f; // Altura del camino
 
-    public GameMap(AssetManager assetManager, Path path) {
+    public GameMap(AssetManager assetManager) {
         // Crear terreno base con textura
         Box ground = new Box(MAP_SIZE/2, 0.1f, MAP_SIZE/2);
         
@@ -50,12 +50,11 @@ public class GameMap extends Node {
         groundGeom.setMaterial(groundMat);
         this.attachChild(groundGeom);
         
-        createTowerSpotIndicators(assetManager, path);
-        
-        // Crear camino visible
+        // Crear camino visible primero
         createPath(assetManager);
         
-        
+        // Crear indicadores de torres usando el mismo estilo que el camino
+        createTowerSpotIndicators(assetManager);
         
         // Crear cielo con textura
         createSky(assetManager);
@@ -327,32 +326,39 @@ public class GameMap extends Node {
         
         this.attachChild(wall);
         System.out.println("Muro simple naranja añadido como respaldo en posición (" + x + ", " + y + ", " + z + ")");
-    }    private void createTowerSpotIndicators(AssetManager assetManager, Path path) {
+    }   
+    
+    private void createTowerSpotIndicators(AssetManager assetManager) {
         Node spotsNode = new Node("TowerSpots");
-
-        // Cargar y configurar la textura dirt.jpg
-        Texture dirtTexture = assetManager.loadTexture("Textures/dirt.jpg");
-        dirtTexture.setWrap(WrapMode.Repeat);
-        dirtTexture.setMagFilter(Texture.MagFilter.Bilinear); // Mejor filtrado
-        dirtTexture.setAnisotropicFilter(8); // Mejor visualización en ángulos
-
-        // Crear material con mejor visibilidad
-        Material spotMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        spotMaterial.setTexture("ColorMap", dirtTexture);
-        spotMaterial.setColor("Color", new ColorRGBA(0.8f, 0.7f, 0.6f, 0.7f)); // Color tierra más visible y semi-transparente
-        spotMaterial.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
-
-        // Obtener los spots válidos
-        List<int[]> validSpots = path.getValidTowerSpots();
-
-        // Crear un indicador para cada spot válido (igual que el camino)
+        
+        // Crear una instancia de Path para obtener los spots válidos
+        Path pathCalculator = new Path();
+        List<int[]> validSpots = pathCalculator.getValidTowerSpots();
+        
+        // Crear material para los spots
+        Material spotMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        
+        // Cargar y configurar la textura
+        Texture pathTexture = assetManager.loadTexture("Textures/dirt.jpg");
+        pathTexture.setWrap(WrapMode.Repeat);
+        spotMat.setTexture("ColorMap", pathTexture);
+        
+        // Crear los indicadores de spots
         for (int[] spot : validSpots) {
-            Box tile = new Box(TILE_SIZE/2, 0.051f, TILE_SIZE/2); // Ligeramente más alto que el camino para que se vea encima
+            Box tile = new Box(TILE_SIZE/2, 0.05f, TILE_SIZE/2);
             Geometry spotGeom = new Geometry("TowerSpotTile", tile);
-            spotGeom.setMaterial(spotMaterial);
-            spotGeom.setLocalTranslation(spot[0], PATH_Y + 0.01f, spot[1]);
+            spotGeom.setMaterial(spotMat);
+            
+            // Posicionar el spot
+            spotGeom.setLocalTranslation(
+                spot[0],
+                PATH_Y,
+                spot[1]
+            );
+            
             spotsNode.attachChild(spotGeom);
         }
+        
         this.attachChild(spotsNode);
     }
 }
