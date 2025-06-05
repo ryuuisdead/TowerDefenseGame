@@ -2,23 +2,26 @@ package mygame.towers;
 
 import com.jme3.math.ColorRGBA;
 
-public enum TowerType {    BASIC("Torre Básica", 30, 3, 2.5f, 1.0f, ColorRGBA.Blue, ColorRGBA.Cyan, "Disparo estándar", 
+public enum TowerType {
+    BASIC("Torre Básica", 30, 3, 2.5f, 1.0f, ColorRGBA.Blue, ColorRGBA.Cyan, "Disparo estándar", 
           new int[]{5, 6}, // Daño mejorado por nivel
           new float[]{1.1f, 1.3f}, // Multiplicador de cadencia por nivel
           new int[]{15, 25}, // Costo de mejora por nivel
-          new float[]{3.0f, 3.5f}), // Rango mejorado por nivel (opcional)
+          new float[]{3.0f, 3.5f}, // Rango mejorado por nivel (opcional)
+          "Sounds/Towers/basic.wav"), // Sonido de disparo
           
     SNIPER("Torre Francotirador", 50, 4, 4.0f, 0.4f, ColorRGBA.Gray, ColorRGBA.Red, "Alto daño, baja cadencia",
            new int[]{8, 12}, // Daño mejorado por nivel
            new float[]{0.5f, 0.6f}, // Multiplicador de cadencia por nivel
            new int[]{35, 45}, // Costo de mejora por nivel
-           new float[]{5.0f, 6.5f}), // Rango mejorado por nivel (opcional)
-           
-    RAPID("Torre Rápida", 75, 2, 2.0f, 1.5f, ColorRGBA.Green, ColorRGBA.Yellow, "Disparo rápido de bajo daño",
+           new float[]{5.0f, 6.5f}, // Rango mejorado por nivel (opcional)
+           "Sounds/Towers/sniper.wav"), // Sonido de disparo
+             RAPID("Torre Rápida", 75, 2, 2.0f, 1.5f, ColorRGBA.Green, ColorRGBA.Yellow, "Disparo rápido de bajo daño",
           new int[]{3, 5}, // Daño mejorado por nivel
           new float[]{1.7f, 2.0f}, // Multiplicador de cadencia por nivel
           new int[]{50, 65}, // Costo de mejora por nivel
-          new float[]{2.5f, 3.0f}); // Rango mejorado por nivel (opcional)
+          new float[]{2.5f, 3.0f}, // Rango mejorado por nivel (opcional)
+          "Sounds/Towers/rapid.wav"); // Sonido de disparo
     
     private final String name;
     private final int cost;
@@ -28,6 +31,7 @@ public enum TowerType {    BASIC("Torre Básica", 30, 3, 2.5f, 1.0f, ColorRGBA.B
     private final ColorRGBA baseColor;
     private final ColorRGBA topColor;
     private final String description;
+    private final String soundPath; // Ruta del sonido de disparo
     
     // Nuevos atributos para mejoras (por nivel)
     private final int[] upgradedDamage;      // Daño mejorado por nivel
@@ -36,7 +40,8 @@ public enum TowerType {    BASIC("Torre Básica", 30, 3, 2.5f, 1.0f, ColorRGBA.B
     private final float[] upgradedRange;      // Rango mejorado por nivel (opcional)
       TowerType(String name, int cost, int damage, float range, float fireRate, 
               ColorRGBA baseColor, ColorRGBA topColor, String description,
-              int[] upgradedDamage, float[] upgradedFireRate, int[] upgradeCost, float[] upgradedRange) {
+              int[] upgradedDamage, float[] upgradedFireRate, int[] upgradeCost, float[] upgradedRange,
+              String soundPath) {
         this.name = name;
         this.cost = cost;
         this.damage = damage;
@@ -49,6 +54,7 @@ public enum TowerType {    BASIC("Torre Básica", 30, 3, 2.5f, 1.0f, ColorRGBA.B
         this.upgradedFireRate = upgradedFireRate;
         this.upgradeCost = upgradeCost;
         this.upgradedRange = upgradedRange;
+        this.soundPath = soundPath;
     }
     
     // Getters
@@ -83,5 +89,9 @@ public enum TowerType {    BASIC("Torre Básica", 30, 3, 2.5f, 1.0f, ColorRGBA.B
     
     public int getMaxUpgradeLevel() {
         return upgradeCost.length;
+    }
+
+    public String getSoundPath() {
+        return soundPath;
     }
 }

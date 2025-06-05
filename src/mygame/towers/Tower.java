@@ -16,6 +16,8 @@ import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Cylinder;
 import com.jme3.scene.shape.Sphere;
+import com.jme3.audio.AudioNode;
+import com.jme3.audio.AudioData.DataType;
 import java.util.ArrayList;
 import java.util.List;
 import mygame.Main;
@@ -41,6 +43,11 @@ public class Tower extends Node {
     private Node topNode;
     private boolean useModel = true; // Cambiar a true para usar el modelo 3D
     
+    // Sonidos
+    private AudioNode shootSound;
+    private AudioNode impactSound;
+    private static AudioNode currentImpactSound; // Sonido de impacto compartido entre todas las torres
+    
     // Clase interna para manejar información de proyectiles
     private class ProjectileInfo {
         Geometry geometry;
@@ -63,6 +70,9 @@ public class Tower extends Node {
     public Tower(AssetManager assetManager, Vector3f position, TowerType type) {
         this.assetManager = assetManager;
         this.towerType = type;
+        
+        // Configurar sonidos
+        setupSounds();
         
         // Configurar propiedades según el tipo
         updateStats(); // Nuevo método para actualizar estadísticas basado en el nivel
@@ -322,6 +332,14 @@ public class Tower extends Node {
                 if (distanceToTarget < 0.3f) {
                     // El proyectil impactó al enemigo
                     projectilesToRemove.add(projectileInfo);
+                    
+                    // Reproducir sonido de impacto
+                    if (currentImpactSound != null) {
+                        // Detener cualquier reproducción anterior
+                        currentImpactSound.stop();
+                        // Reproducir el sonido de impacto
+                        currentImpactSound.playInstance();
+                    }
                 }
             }
         }
@@ -357,6 +375,12 @@ public class Tower extends Node {
     
     private void shootAt(Enemy target) {
         target.takeDamage(damage);
+        
+        // Reproducir sonido de disparo
+        if (shootSound != null) {
+            shootSound.playInstance();
+        }
+        
         System.out.println("¡" + towerType.getName() + " dispara! Daño: " + damage + " - Salud restante: " + target.getHealth());
     }
     
@@ -683,6 +707,66 @@ public class Tower extends Node {
         if (highlightGeometry != null) {
             highlightGeometry.removeFromParent();
             highlightGeometry = null;
+        }
+    }    private void setupSounds() {
+        try {
+            // Obtener la ruta del sonido de disparo
+            String shootSoundPath = towerType.getSoundPath();
+            System.out.println("Configurando sonido de disparo para " + towerType.getName() + ": " + shootSoundPath);
+            
+            // Verificar que los archivos existen
+            if (assetManager.locateAsset(new com.jme3.asset.AssetKey(shootSoundPath)) == null) {
+                System.err.println("¡ADVERTENCIA! No se encuentra el archivo de sonido: " + shootSoundPath);
+            }
+            
+            // Intentar cargar el sonido de disparo
+            try {
+                // Primero intentar como Buffer para mejor rendimiento
+                shootSound = new AudioNode(assetManager, shootSoundPath, DataType.Buffer);
+                System.out.println("Sonido de disparo cargado como Buffer");
+            } catch (Exception e) {
+                // Si falla, intentar como Stream
+                System.out.println("Error cargando como Buffer, intentando como Stream...");
+                shootSound = new AudioNode(assetManager, shootSoundPath, DataType.Stream);
+                System.out.println("Sonido de disparo cargado como Stream");
+            }
+            
+            // Configurar el sonido de disparo
+            shootSound.setPositional(false);
+            shootSound.setLooping(false);
+            shootSound.setVolume(0.4f);
+            shootSound.setReverbEnabled(false);
+            this.attachChild(shootSound);
+            
+            // Configurar sonido de impacto compartido si aún no existe
+            if (currentImpactSound == null) {
+                String impactSoundPath = "Sounds/Ambiente/impacto.wav";
+                System.out.println("Configurando sonido de impacto compartido: " + impactSoundPath);
+                
+                // Verificar que el archivo existe
+                if (assetManager.locateAsset(new com.jme3.asset.AssetKey(impactSoundPath)) == null) {
+                    System.err.println("¡ADVERTENCIA! No se encuentra el archivo de sonido: " + impactSoundPath);
+                }
+                
+                try {
+                    currentImpactSound = new AudioNode(assetManager, impactSoundPath, DataType.Buffer);
+                    System.out.println("Sonido de impacto cargado como Buffer");
+                } catch (Exception e) {
+                    System.out.println("Error cargando como Buffer, intentando como Stream...");
+                    currentImpactSound = new AudioNode(assetManager, impactSoundPath, DataType.Stream);
+                    System.out.println("Sonido de impacto cargado como Stream");
+                }
+                currentImpactSound.setPositional(false);
+                currentImpactSound.setLooping(false);
+                currentImpactSound.setVolume(0.3f);
+                currentImpactSound.setReverbEnabled(false);
+            }
+            
+            System.out.println("Configuración de sonidos completada exitosamente");
+            
+        } catch (Exception e) {
+            System.err.println("Error cargando sonidos para " + towerType.getName() + ": " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

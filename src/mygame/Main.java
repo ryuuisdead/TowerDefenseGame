@@ -11,7 +11,6 @@ import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
-import com.jme3.math.FastMath;
 import com.jme3.scene.Spatial;
 import com.jme3.system.AppSettings;
 import java.util.ArrayList;
@@ -27,6 +26,8 @@ import com.jme3.material.Material;
 import com.jme3.scene.Node;
 import com.jme3.math.ColorRGBA;
 import com.jme3.texture.Texture;
+import com.jme3.audio.AudioNode;
+import com.jme3.audio.AudioData.DataType;
 import mygame.menu.MenuState;
 import com.jme3.app.state.AppStateManager;
 
@@ -69,6 +70,9 @@ public class Main extends SimpleApplication {
     // Estado del menú
     private MenuState menuState;
     private boolean gameStarted = false;
+    
+    // Audio del juego
+    private AudioNode gameMusic;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -122,11 +126,12 @@ public class Main extends SimpleApplication {
         
         System.out.println("¡Juego iniciado!");
     }
-    
-    /**
+      /**
      * Inicializa todos los componentes del juego
-     */
-    private void initGame() {
+     */    private void initGame() {
+        // Iniciar la música del juego
+        setupGameMusic();
+        
         // Crear mapa/terreno con camino visible
         gameMap = new GameMap(assetManager);
         rootNode.attachChild(gameMap);
@@ -684,14 +689,31 @@ public class Main extends SimpleApplication {
         if (escapedDemons >= MAX_ESCAPED_DEMONS) {
             gameOver();
         }
-    }
-
-    // Método para manejar el game over
+    }    // Método para manejar el game over
     private void gameOver() {
         System.out.println("=== GAME OVER ===");
         System.out.println("Han escapado " + escapedDemons + " demonios");
         System.out.println("Puntuación final: " + score);
         System.out.println("Oleada alcanzada: " + currentWave);
+        
+        // Detener la música del juego gradualmente
+        if (gameMusic != null) {
+            // Crear un hilo para bajar el volumen gradualmente
+            new Thread(() -> {
+                float volume = gameMusic.getVolume();
+                while (volume > 0) {
+                    volume -= 0.05f;
+                    gameMusic.setVolume(volume);
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                gameMusic.stop();
+                gameMusic = null;
+            }).start();
+        }
         
         // Mostrar mensaje de game over en la UI
         gameUI.showGameOverMessage(score, currentWave);
@@ -837,5 +859,37 @@ public class Main extends SimpleApplication {
     // Getter para GameMap (necesario para verificación en GameState)
     public GameMap getGameMap() {
         return gameMap;
+    }
+      /**
+     * Configura y reproduce la música del juego
+     */
+    private void setupGameMusic() {
+        try {
+            // Detener música anterior si existe
+            if (gameMusic != null) {
+                gameMusic.stop();
+                gameMusic = null;
+            }
+            
+            // Verificar que el archivo de música existe
+            if (assetManager.locateAsset(new com.jme3.asset.AssetKey("Sounds/Music/music_game.wav")) == null) {
+                System.err.println("¡ADVERTENCIA! No se encuentra el archivo de música: Sounds/Music/music_game.wav");
+                return;
+            }
+            
+            // Configurar música del juego
+            gameMusic = new AudioNode(assetManager, "Sounds/Music/music_game.wav", DataType.Buffer);
+            gameMusic.setLooping(true);
+            gameMusic.setPositional(false);
+            gameMusic.setVolume(0.4f);
+            
+            // Reproducir música del juego
+            gameMusic.play();
+            System.out.println("Música del juego iniciada correctamente");
+            
+        } catch (Exception e) {
+            System.err.println("Error al configurar la música del juego: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

@@ -19,6 +19,9 @@ import com.jme3.scene.Node;
 import com.jme3.scene.shape.Quad;
 import com.jme3.system.AppSettings;
 import com.jme3.texture.Texture;
+import com.jme3.audio.AudioNode;
+import com.jme3.audio.AudioData;
+import com.jme3.audio.AudioData.DataType;
 
 /**
  * Estado de aplicación que maneja el menú principal del juego
@@ -37,6 +40,10 @@ public class MenuState extends AbstractAppState implements ActionListener {
     private BitmapText titleText;
     private BitmapText startButtonText;
     
+    // Audio
+    private com.jme3.audio.AudioNode menuMusic;
+    private com.jme3.audio.AudioNode startGameSound;
+    
     // Callback para cuando se presiona el botón start
     private Runnable startGameCallback;
 
@@ -53,6 +60,9 @@ public class MenuState extends AbstractAppState implements ActionListener {
         this.assetManager = app.getAssetManager();
         this.stateManager = stateManager;
         this.inputManager = app.getInputManager();
+        
+        // Configurar audio
+        setupAudio();
         
         // IMPORTANTE: Establecer el viewport y configurar la cámara para la GUI
         this.app.getViewPort().setClearFlags(true, true, true);
@@ -165,6 +175,76 @@ public class MenuState extends AbstractAppState implements ActionListener {
         menuNode.attachChild(startButtonText);
     }
     
+    private void setupAudio() {
+        // Configurar música del menú
+        menuMusic = new com.jme3.audio.AudioNode(assetManager, "Sounds/Music/menu_music.wav", false);
+        menuMusic.setLooping(true);
+        menuMusic.setPositional(false);
+        menuMusic.setVolume(0.5f);
+        
+        // Configurar sonido de inicio
+        startGameSound = new com.jme3.audio.AudioNode(assetManager, "Sounds/Misc/start_game.wav", false);
+        startGameSound.setLooping(false);
+        startGameSound.setPositional(false);
+        startGameSound.setVolume(0.8f);
+        
+        // Reproducir música del menú
+        menuMusic.play();
+    }    @Override
+    public void cleanup() {
+        // Detener y limpiar audio al salir del menú
+        if (menuMusic != null) {
+            menuMusic.stop();
+            menuMusic = null;
+        }
+        if (startGameSound != null) {
+            startGameSound.stop();
+            startGameSound = null;
+        }
+        
+        // Limpiar recursos y desregistrar mapeos de entrada
+        guiNode.detachChild(menuNode);
+        inputManager.deleteMapping("StartGame");
+        inputManager.removeListener(this);
+        
+        super.cleanup();
+    }
+
+    private void handleStartGame() {
+        // Reproducir sonido de inicio
+        startGameSound.playInstance();
+        
+        // Detener música del menú gradualmente
+        app.enqueue(() -> {
+            float volume = menuMusic.getVolume();
+            while (volume > 0) {
+                volume -= 0.1f;
+                menuMusic.setVolume(volume);
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            menuMusic.stop();
+            return null;
+        });
+        
+        // Iniciar el juego después de un pequeño retraso
+        app.enqueue(() -> {
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            
+            if (startGameCallback != null) {
+                startGameCallback.run();
+            }
+            return null;
+        });
+    }
+
     @Override
     public void onAction(String name, boolean isPressed, float tpf) {
         if (name.equals("StartGame") && isPressed) {
@@ -177,22 +257,8 @@ public class MenuState extends AbstractAppState implements ActionListener {
                 // Animar el botón al hacer clic
                 animateButtonClick();
                 
-                // Llamar al callback para iniciar el juego después de un pequeño retraso
-                // para que se vea la animación
-                app.enqueue(() -> {
-                    try {
-                        // Esperar 300ms para que se vea la animación
-                        Thread.sleep(300);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    
-                    // Iniciar el juego
-                    if (startGameCallback != null) {
-                        startGameCallback.run();
-                    }
-                    return null;
-                });
+                // Manejar el inicio del juego con efectos de sonido
+                handleStartGame();
             } else {
                 System.out.println("Clic fuera del botón");
             }
@@ -290,8 +356,7 @@ public class MenuState extends AbstractAppState implements ActionListener {
 
     /**
      * Verifica si el cursor está actualmente sobre el botón
-     */
-    private boolean isMouseOverButton() {
+     */    private boolean isMouseOverButton() {
         Vector2f cursorPos = inputManager.getCursorPosition();
         float x = cursorPos.x;
         float y = cursorPos.y;
@@ -304,15 +369,5 @@ public class MenuState extends AbstractAppState implements ActionListener {
         
         return (x >= buttonX && x <= buttonX + buttonWidth &&
                 y >= buttonY && y <= buttonY + buttonHeight);
-    }
-    
-    @Override
-    public void cleanup() {
-        super.cleanup();
-        
-        // Limpiar recursos y desregistrar mapeos de entrada
-        guiNode.detachChild(menuNode);
-        inputManager.deleteMapping("StartGame");
-        inputManager.removeListener(this);
     }
 }
