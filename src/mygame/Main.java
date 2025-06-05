@@ -721,6 +721,7 @@ public class Main extends SimpleApplication {
             System.out.println("Torre seleccionada: " + selectedTower.getTowerType().getName() + 
                               " (Nivel " + selectedTower.getLevel() + ")");
         } else {
+            showTowerInfo(selectedTower);
             System.out.println("No se ha seleccionado ninguna torre");
         }
     }
