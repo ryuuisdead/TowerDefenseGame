@@ -338,6 +338,11 @@ public class Enemy extends Node {
             }
         }
     }
+
+    public void upgradeStats(float param){
+        this.maxHealth += (int)(this.maxHealth * param);
+        this.speed += this.speed * param;
+    }
     
     // Getters
     public boolean isAlive() { return alive; }

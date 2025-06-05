@@ -3,9 +3,9 @@ package mygame.enemies;
 import com.jme3.math.ColorRGBA;
 
 public enum EnemyType {
-    BASIC("Zombie", 100, 1.0f, "Models/Zombie Agonizing/ZombieAgonizing.j3o", 10, ColorRGBA.LightGray),
-    HELLHOUND("Perro Infernal", 200, 1.5f, "Models/helishdog/helishdog.j3o", 25, ColorRGBA.Red),
-    TANK("Monstruo Tanque", 500, 0.6f, "Models/future monster_low/future monster_low.j3o", 40, ColorRGBA.Blue);
+    BASIC("Zombie", 20, 0.8f, "Models/Zombie Agonizing/ZombieAgonizing.j3o", 3, ColorRGBA.LightGray),
+    HELLHOUND("Perro Infernal", 30, 1.0f, "Models/helishdog/helishdog.j3o", 5, ColorRGBA.Red),
+    TANK("Monstruo Tanque", 60, 0.6f, "Models/future monster_low/future monster_low.j3o", 7, ColorRGBA.Blue);
     // Quitar "assets\" de las rutas, JME3 ya asume que los recursos están en la carpeta assets
     
     private final String name;

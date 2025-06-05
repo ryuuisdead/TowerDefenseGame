@@ -46,7 +46,7 @@ public class Main extends SimpleApplication {
     private boolean waveInProgress = false;
     
     // Economía del jugador
-    private int money = 200;
+    private int money = 160;
     private int score = 0;
     
     // Constantes para la torre
@@ -454,31 +454,47 @@ public class Main extends SimpleApplication {
         // Seleccionar tipo de enemigo según la oleada actual y probabilidad
         EnemyType enemyType;
         float random = FastMath.nextRandomFloat();
-        
-        if (currentWave >= 3) {
-            // A partir de la oleada 3, pueden aparecer tanques
-            if (random < 0.60f) { // 15% probabilidad de tanque
+        float mejora = 0;          if (currentWave >= 6) {
+            // A partir de la oleada 6, tanques con probabilidad creciente
+            float tankChance = Math.min(0.60f, 0.10f + (currentWave - 6) * 0.10f); // Aumenta 10% por ronda, máximo 60%
+            float hellhoundChance = 0.20f; // Probabilidad fija de perros infernales
+            
+            if (random < tankChance) { // Probabilidad creciente de tanques
                 enemyType = EnemyType.TANK;
-            } else if (random < 0.10f) { // 35% probabilidad de hellhound
+            } else if (random < (tankChance + hellhoundChance)) { // 20% probabilidad de hellhound
                 enemyType = EnemyType.HELLHOUND;
-            } else { // 50% probabilidad de zombie básico
+            } else { // Resto son zombies básicos
                 enemyType = EnemyType.BASIC;
             }
-        } else if (currentWave >= 1) {
-            // Oleadas 1-2: 50% chance de perros infernales
-            if (random < 0.5f) {
+        } else if (currentWave >= 2) {
+            // Oleadas 2-5: probabilidad creciente de perros infernales
+            float hellhoundChance = Math.min(0.60f, 0.10f + (currentWave - 2) * 0.125f); // 10%, 22.5%, 35%, 47.5%, 60%
+            
+            if (random < hellhoundChance) {
                 enemyType = EnemyType.HELLHOUND;
             } else {
                 enemyType = EnemyType.BASIC;
             }
         } else {
-            // Oleada inicial: solo zombies
+            // Oleada inicial: solo zombies básicos
             enemyType = EnemyType.BASIC;
-        }
-        
-        // Crear el enemigo con el tipo seleccionado
+        }// Crear el enemigo con el tipo seleccionado
         Enemy enemy = new Enemy(assetManager, path.getWaypoints(), enemyType);
         
+        if (currentWave >= 2) {
+            if (currentWave <= 6) {
+                // Mejora lineal de la ronda 2 a 6 (*1, *2, *3, *4, *5)
+                mejora = 0.2f * (currentWave - 1); // 0.2, 0.4, 0.6, 0.8, 1.0
+            } else if (currentWave <= 10) {
+                // Rondas 7-10: aumentos más graduales
+                mejora = 1.0f + (0.15f * (currentWave - 6)); // 1.15, 1.30, 1.45, 1.60
+            } else {
+                // A partir de la ronda 10, mejora exponencial más agresiva
+                mejora = 1.6f * (float)Math.pow(1.25, currentWave - 10); // Comienza en ~2.0 y crece más rápido
+            }
+            enemy.upgradeStats(mejora);
+        }
+
         // Colocar el enemigo en el inicio del camino (primer waypoint)
         enemy.setLocalTranslation(path.getWaypoints().get(0));
         
@@ -787,8 +803,8 @@ public class Main extends SimpleApplication {
             return;
         }
         
-        // Calcular el valor de reembolso (50% del costo total)
-        int refundValue = (int)(selectedTower.getTotalInvestment() * 0.5f);
+        // Calcular el valor de reembolso (40% del costo total)
+        int refundValue = (int)(selectedTower.getTotalInvestment() * 0.4f);
         
         // Eliminar la torre
         rootNode.detachChild(selectedTower);

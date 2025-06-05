@@ -2,15 +2,23 @@ package mygame.towers;
 
 import com.jme3.math.ColorRGBA;
 
-public enum TowerType {
-    BASIC("Torre Básica", 50, 40, 8.0f, 1.0f, ColorRGBA.Blue, ColorRGBA.Cyan, "Disparo estándar", 
-          new int[]{60, 75}, new float[]{1.2f, 1.5f}, new int[]{50, 65}),
+public enum TowerType {    BASIC("Torre Básica", 30, 3, 2.5f, 1.0f, ColorRGBA.Blue, ColorRGBA.Cyan, "Disparo estándar", 
+          new int[]{5, 6}, // Daño mejorado por nivel
+          new float[]{1.1f, 1.3f}, // Multiplicador de cadencia por nivel
+          new int[]{15, 25}, // Costo de mejora por nivel
+          new float[]{3.0f, 3.5f}), // Rango mejorado por nivel (opcional)
           
-    SNIPER("Torre Francotirador", 100, 80, 12.0f, 0.5f, ColorRGBA.Gray, ColorRGBA.Red, "Alto daño, baja cadencia",
-           new int[]{110, 150}, new float[]{1.3f, 1.5f}, new int[]{90, 120}),
+    SNIPER("Torre Francotirador", 50, 4, 4.0f, 0.4f, ColorRGBA.Gray, ColorRGBA.Red, "Alto daño, baja cadencia",
+           new int[]{8, 12}, // Daño mejorado por nivel
+           new float[]{0.5f, 0.6f}, // Multiplicador de cadencia por nivel
+           new int[]{35, 45}, // Costo de mejora por nivel
+           new float[]{5.0f, 6.5f}), // Rango mejorado por nivel (opcional)
            
-    RAPID("Torre Rápida", 75, 20, 6.0f, 3.0f, ColorRGBA.Green, ColorRGBA.Yellow, "Disparo rápido de bajo daño",
-          new int[]{25, 35}, new float[]{1.5f, 2.0f}, new int[]{80, 100});
+    RAPID("Torre Rápida", 75, 2, 2.0f, 1.5f, ColorRGBA.Green, ColorRGBA.Yellow, "Disparo rápido de bajo daño",
+          new int[]{3, 5}, // Daño mejorado por nivel
+          new float[]{1.7f, 2.0f}, // Multiplicador de cadencia por nivel
+          new int[]{50, 65}, // Costo de mejora por nivel
+          new float[]{2.5f, 3.0f}); // Rango mejorado por nivel (opcional)
     
     private final String name;
     private final int cost;
@@ -25,10 +33,10 @@ public enum TowerType {
     private final int[] upgradedDamage;      // Daño mejorado por nivel
     private final float[] upgradedFireRate;  // Multiplicador de cadencia por nivel
     private final int[] upgradeCost;         // Costo de mejora por nivel
-    
-    TowerType(String name, int cost, int damage, float range, float fireRate, 
+    private final float[] upgradedRange;      // Rango mejorado por nivel (opcional)
+      TowerType(String name, int cost, int damage, float range, float fireRate, 
               ColorRGBA baseColor, ColorRGBA topColor, String description,
-              int[] upgradedDamage, float[] upgradedFireRate, int[] upgradeCost) {
+              int[] upgradedDamage, float[] upgradedFireRate, int[] upgradeCost, float[] upgradedRange) {
         this.name = name;
         this.cost = cost;
         this.damage = damage;
@@ -40,6 +48,7 @@ public enum TowerType {
         this.upgradedDamage = upgradedDamage;
         this.upgradedFireRate = upgradedFireRate;
         this.upgradeCost = upgradeCost;
+        this.upgradedRange = upgradedRange;
     }
     
     // Getters
@@ -62,10 +71,14 @@ public enum TowerType {
         if (level <= 0 || level > upgradedFireRate.length) return fireRate;
         return fireRate * upgradedFireRate[level-1];
     }
-    
-    public int getUpgradeCost(int level) {
+      public int getUpgradeCost(int level) {
         if (level <= 0 || level > upgradeCost.length) return 0;
         return upgradeCost[level-1];
+    }
+
+    public float getUpgradedRange(int level) {
+        if (level <= 0 || level > upgradedRange.length) return range;
+        return upgradedRange[level-1];
     }
     
     public int getMaxUpgradeLevel() {

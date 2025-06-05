@@ -4,14 +4,17 @@ import com.jme3.app.Application;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.asset.AssetManager;
 import com.jme3.material.Material;
+import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
+import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
+import com.jme3.scene.shape.Cylinder;
 import com.jme3.scene.shape.Sphere;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +83,7 @@ public class Tower extends Node {
         
         System.out.println("Torre " + type.getName() + " creada en " + position);
     }
-    
+      
     // Método para actualizar estadísticas basadas en el nivel
     private void updateStats() {
         if (level == 0) {
@@ -92,7 +95,7 @@ public class Tower extends Node {
             // Nivel mejorado
             this.damage = towerType.getUpgradedDamage(level);
             this.fireRate = towerType.getUpgradedFireRate(level);
-            // El rango se mantiene igual por ahora, pero podría mejorarse también
+            this.range = towerType.getUpgradedRange(level);
         }
     }
     
@@ -683,3 +686,4 @@ public class Tower extends Node {
         }
     }
 }
+
