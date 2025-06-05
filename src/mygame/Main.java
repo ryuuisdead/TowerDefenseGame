@@ -26,6 +26,8 @@ import com.jme3.material.Material;
 import com.jme3.scene.Node;
 import com.jme3.math.ColorRGBA;
 import com.jme3.texture.Texture;
+import mygame.menu.MenuState;
+import com.jme3.app.state.AppStateManager;
 
 public class Main extends SimpleApplication {
 
@@ -62,6 +64,10 @@ public class Main extends SimpleApplication {
     private final int MAX_ESCAPED_DEMONS = 5;
     
     private Tower selectedTower = null; // Torre seleccionada para mejorar
+    
+    // Estado del menú
+    private MenuState menuState;
+    private boolean gameStarted = false;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -78,6 +84,48 @@ public class Main extends SimpleApplication {
     public void simpleInitApp() {
         setDisplayStatView(false);
         setDisplayFps(false);
+        
+        // Inicializar el menú en lugar del juego directamente
+        initMenu();
+    }
+    
+    private void initMenu() {
+        // Crear y añadir el estado del menú
+        menuState = new MenuState(() -> startGame());
+        stateManager.attach(menuState);
+        
+        // Configurar cámara para el menú
+        cam.setLocation(new Vector3f(0, 0, 10));
+        cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
+        
+        // Mostrar el cursor y desactivar el FlyCam para interactuar con el menú
+        inputManager.setCursorVisible(true);
+        flyCam.setEnabled(false);
+    }
+    
+    /**
+     * Método que se llama cuando el jugador presiona el botón "Iniciar Juego"
+     */
+    private void startGame() {
+        // Eliminar el menú
+        stateManager.detach(menuState);
+        
+        // Inicializar el juego
+        initGame();
+        
+        // Marcar el juego como iniciado
+        gameStarted = true;
+        
+        // Mantener el cursor visible para el juego
+        inputManager.setCursorVisible(true);
+        
+        System.out.println("¡Juego iniciado!");
+    }
+    
+    /**
+     * Inicializa todos los componentes del juego
+     */
+    private void initGame() {
         // Crear mapa/terreno con camino visible
         gameMap = new GameMap(assetManager);
         rootNode.attachChild(gameMap);
@@ -276,6 +324,11 @@ public class Main extends SimpleApplication {
 
     @Override
     public void simpleUpdate(float tpf) {
+        // Solo actualizar la lógica del juego si el juego ha comenzado
+        if (!gameStarted) {
+            return;
+        }
+        
         // Gestión de oleadas
         manageWaves(tpf);
         
