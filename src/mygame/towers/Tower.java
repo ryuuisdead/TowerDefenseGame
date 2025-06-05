@@ -367,7 +367,7 @@ public class Tower extends Node {
         switch (towerType) {
             case SNIPER:
                 // Proyectil más grande y rápido (bala de francotirador)
-                Sphere bullet = new Sphere(8, 8, 0.3f);
+                Sphere bullet = new Sphere(4, 4, 0.3f);
                 bulletGeom = new Geometry("Bullet", bullet);
                 Material bulletMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
                 bulletMat.setColor("Color", new ColorRGBA(1f, 0.2f, 0.1f, 1f)); // Rojo
@@ -376,7 +376,7 @@ public class Tower extends Node {
                 
             case RAPID:
                 // Proyectil pequeño (fuego rápido)
-                Sphere fastBullet = new Sphere(6, 6, 0.15f);
+                Sphere fastBullet = new Sphere(2, 2, 0.15f);
                 bulletGeom = new Geometry("Bullet", fastBullet);
                 Material fastBulletMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
                 fastBulletMat.setColor("Color", new ColorRGBA(0.8f, 1f, 0.2f, 1f)); // Amarillo-verde
@@ -385,7 +385,7 @@ public class Tower extends Node {
                 
             default: // BASIC
                 // Proyectil estándar
-                Sphere standardBullet = new Sphere(8, 8, 0.25f);
+                Sphere standardBullet = new Sphere(3, 3, 0.25f);
                 bulletGeom = new Geometry("Bullet", standardBullet);
                 Material standardBulletMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
                 standardBulletMat.setColor("Color", new ColorRGBA(1f, 0.8f, 0.0f, 1f)); // Amarillo-naranja
@@ -591,7 +591,7 @@ public class Tower extends Node {
             }
             
             // Aumentar ligeramente la escala para efecto visual
-            towerModel.setLocalScale(towerModel.getLocalScale().mult(1.1f));
+            towerModel.setLocalScale(towerModel.getLocalScale().mult(1.05f));
             
             System.out.println("Efecto de brillo aplicado a torre nivel " + level);
         } catch (Exception e) {

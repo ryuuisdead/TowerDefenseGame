@@ -15,7 +15,7 @@ public class Bullet extends Node {
     private boolean active = true;
 
     public Bullet(AssetManager assetManager, Vector3f position, Vector3f target) {
-        Sphere sphere = new Sphere(4, 4, 0.2f);
+        Sphere sphere = new Sphere(2, 2, 0.2f);
         Geometry geom = new Geometry("Bullet", sphere);
         Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         mat.setColor("Color", ColorRGBA.Yellow);
