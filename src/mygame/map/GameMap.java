@@ -1,13 +1,20 @@
 package mygame.map;
 
+import java.util.List;
+
 import com.jme3.asset.AssetManager;
 import com.jme3.material.Material;
+import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.FastMath;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
+import com.jme3.math.Quaternion;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
+import com.jme3.scene.shape.Quad;
 import com.jme3.texture.Texture;
 import com.jme3.texture.Texture.WrapMode;
 import com.jme3.util.SkyFactory;
@@ -21,7 +28,7 @@ public class GameMap extends Node {
     public static final float TILE_SIZE = 1.0f;
     public static final float PATH_Y = 0.1f; // Altura del camino
 
-    public GameMap(AssetManager assetManager) {
+    public GameMap(AssetManager assetManager, Path path) {
         // Crear terreno base con textura
         Box ground = new Box(MAP_SIZE/2, 0.1f, MAP_SIZE/2);
         
@@ -43,8 +50,12 @@ public class GameMap extends Node {
         groundGeom.setMaterial(groundMat);
         this.attachChild(groundGeom);
         
+        createTowerSpotIndicators(assetManager, path);
+        
         // Crear camino visible
         createPath(assetManager);
+        
+        
         
         // Crear cielo con textura
         createSky(assetManager);
@@ -316,5 +327,32 @@ public class GameMap extends Node {
         
         this.attachChild(wall);
         System.out.println("Muro simple naranja añadido como respaldo en posición (" + x + ", " + y + ", " + z + ")");
+    }    private void createTowerSpotIndicators(AssetManager assetManager, Path path) {
+        Node spotsNode = new Node("TowerSpots");
+
+        // Cargar y configurar la textura dirt.jpg
+        Texture dirtTexture = assetManager.loadTexture("Textures/dirt.jpg");
+        dirtTexture.setWrap(WrapMode.Repeat);
+        dirtTexture.setMagFilter(Texture.MagFilter.Bilinear); // Mejor filtrado
+        dirtTexture.setAnisotropicFilter(8); // Mejor visualización en ángulos
+
+        // Crear material con mejor visibilidad
+        Material spotMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        spotMaterial.setTexture("ColorMap", dirtTexture);
+        spotMaterial.setColor("Color", new ColorRGBA(0.8f, 0.7f, 0.6f, 0.7f)); // Color tierra más visible y semi-transparente
+        spotMaterial.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
+
+        // Obtener los spots válidos
+        List<int[]> validSpots = path.getValidTowerSpots();
+
+        // Crear un indicador para cada spot válido (igual que el camino)
+        for (int[] spot : validSpots) {
+            Box tile = new Box(TILE_SIZE/2, 0.051f, TILE_SIZE/2); // Ligeramente más alto que el camino para que se vea encima
+            Geometry spotGeom = new Geometry("TowerSpotTile", tile);
+            spotGeom.setMaterial(spotMaterial);
+            spotGeom.setLocalTranslation(spot[0], PATH_Y + 0.01f, spot[1]);
+            spotsNode.attachChild(spotGeom);
+        }
+        this.attachChild(spotsNode);
     }
 }

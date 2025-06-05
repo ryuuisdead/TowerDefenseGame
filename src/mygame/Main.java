@@ -29,7 +29,8 @@ import com.jme3.texture.Texture;
 import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioData.DataType;
 import mygame.menu.MenuState;
-import com.jme3.app.state.AppStateManager;
+import com.jme3.material.RenderState;
+import com.jme3.scene.shape.Quad;
 
 public class Main extends SimpleApplication {
 
@@ -134,10 +135,11 @@ public class Main extends SimpleApplication {
         
         // Crear mapa/terreno con camino visible
         gameMap = new GameMap(assetManager);
-        rootNode.attachChild(gameMap);
-
-        // Crear instancia del camino para la lógica del juego
+        rootNode.attachChild(gameMap);        // Crear instancia del camino para la lógica del juego
         path = new Path();
+        
+        // Crear indicadores visuales para los spots válidos de torres
+        createTowerSpotIndicators();
         
         // Configurar cámara isométrica fija para visualizar mejor el mapa completo
         cam.setLocation(new Vector3f(-12, 10, 8));
@@ -298,9 +300,7 @@ public class Main extends SimpleApplication {
                 }
             }
         }
-    }
-    
-    // Actualizar el método isValidTowerPosition
+    }    // Método para validar la posición de una torre
     private boolean isValidTowerPosition(Vector3f position) {
         // Redondear a la posición de la cuadrícula
         int gridX = Math.round(position.x);
@@ -311,8 +311,8 @@ public class Main extends SimpleApplication {
             return false;
         }
         
-        // Verificar si está en el camino - Aquí usamos el nuevo método isOnPath
-        if (path.isOnPath(gridX, gridZ)) {
+        // Verificar si es un spot válido para torres
+        if (!path.isValidTowerSpot(gridX, gridZ)) {
             return false;
         }
         
@@ -890,6 +890,43 @@ public class Main extends SimpleApplication {
         } catch (Exception e) {
             System.err.println("Error al configurar la música del juego: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+    
+    private void createTowerSpotIndicators() {
+        // Cargar la textura dirt.jpg
+        Texture dirtTexture = assetManager.loadTexture("Textures/dirt.jpg");
+        
+        // Crear material con la textura
+        Material spotMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        spotMaterial.setTexture("ColorMap", dirtTexture);
+        spotMaterial.setColor("Color", new ColorRGBA(1f, 1f, 1f, 0.5f)); // Semi-transparente
+        spotMaterial.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
+        
+        // Obtener los spots válidos
+        List<int[]> validSpots = path.getValidTowerSpots();
+        
+        // Crear un indicador para cada spot válido
+        for (int[] spot : validSpots) {
+            // Crear una geometría plana (quad) para el spot
+            Quad quad = new Quad(0.8f, 0.8f); // Tamaño ligeramente menor que una unidad
+            Geometry spotGeom = new Geometry("TowerSpot", quad);
+            
+            // Aplicar el material
+            spotGeom.setMaterial(spotMaterial);
+            
+            // Rotar para que sea horizontal
+            spotGeom.rotate(-FastMath.HALF_PI, 0, 0);
+            
+            // Posicionar en el spot
+            spotGeom.setLocalTranslation(
+                spot[0] - 0.4f, // Centrar el quad
+                0.01f,         // Ligeramente sobre el suelo
+                spot[1] + 0.4f  // Centrar el quad
+            );
+            
+            // Añadir al rootNode
+            rootNode.attachChild(spotGeom);
         }
     }
 }

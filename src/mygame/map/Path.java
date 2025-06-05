@@ -3,11 +3,13 @@ package mygame.map;
 import com.jme3.math.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
 
 public class Path {
     
     private List<Vector3f> waypoints = new ArrayList<>();
     private int[][] pathCoordinates; // Representación de la cuadrícula del camino
+    private List<int[]> validTowerSpots; // Lista de coordenadas válidas para torres
     
     public Path() {
         // Inicializar waypoints (puntos del camino)
@@ -15,6 +17,35 @@ public class Path {
         
         // Crear la representación en coordenadas de cuadrícula del camino
         createPathCoordinates();
+        
+        // Definir posiciones válidas para torres
+        createValidTowerSpots();
+    }
+    
+    private void createValidTowerSpots() {
+        validTowerSpots = new ArrayList<>();
+        
+        // Definir spots válidos para torres (coordenadas X,Z)
+        // Spots cerca del primer giro
+        validTowerSpots.add(new int[]{-3, -1});
+        validTowerSpots.add(new int[]{-3, 3});
+
+        
+        // Spots cerca del segundo giro
+        validTowerSpots.add(new int[]{2, 5});
+        validTowerSpots.add(new int[]{1, 6});
+        validTowerSpots.add(new int[]{-5, 6});
+        
+        // Spots cerca del tercer giro
+        validTowerSpots.add(new int[]{0, -1});
+        validTowerSpots.add(new int[]{5, -1});
+        validTowerSpots.add(new int[]{5, 4});
+        validTowerSpots.add(new int[]{5, 2});
+        
+        // Spots adicionales estratégicos
+        validTowerSpots.add(new int[]{-2, 1});
+        validTowerSpots.add(new int[]{-1, 1});
+
     }
     
     private void createPath() {
@@ -136,5 +167,80 @@ public class Path {
             }
         }
         return false;
+    }
+
+    /**
+     * Comprueba si una coordenada está a la derecha del camino
+     * @param worldX Coordenada X del mundo
+     * @param worldZ Coordenada Z del mundo
+     * @return true si la coordenada está a la derecha del camino más cercano
+     */
+    public boolean isRightOfPath(int worldX, int worldZ) {
+        // Encontrar el punto del camino más cercano a la coordenada dada
+        int[] nearestPathPoint = null;
+        double minDistance = Double.MAX_VALUE;
+        
+        for (int[] coord : pathCoordinates) {
+            double distance = Math.sqrt(
+                Math.pow(coord[0] - worldX, 2) + 
+                Math.pow(coord[1] - worldZ, 2)
+            );
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestPathPoint = coord;
+            }
+        }
+        
+        if (nearestPathPoint == null) {
+            return false;
+        }
+
+        // Encuentra el siguiente punto en el camino para determinar la dirección
+        int[] nextPoint = null;
+        for (int i = 0; i < pathCoordinates.length - 1; i++) {
+            if (pathCoordinates[i][0] == nearestPathPoint[0] && 
+                pathCoordinates[i][1] == nearestPathPoint[1]) {
+                nextPoint = pathCoordinates[i + 1];
+                break;
+            }
+        }
+
+        if (nextPoint == null) {
+            return false;
+        }
+
+        // Calcular el vector de dirección del camino
+        int pathDirX = nextPoint[0] - nearestPathPoint[0];
+        int pathDirZ = nextPoint[1] - nearestPathPoint[1];
+
+        // Calcular el vector desde el punto del camino hasta la posición de la torre
+        int towerDirX = worldX - nearestPathPoint[0];
+        int towerDirZ = worldZ - nearestPathPoint[1];
+
+        // Producto cruz 2D (si es positivo, el punto está a la derecha)
+        return (pathDirX * towerDirZ - pathDirZ * towerDirX) < 0;
+    }
+    
+    /**
+     * Verifica si una coordenada es un spot válido para colocar torres
+     * @param worldX Coordenada X del mundo
+     * @param worldZ Coordenada Z del mundo
+     * @return true si es un spot válido para torres
+     */
+    public boolean isValidTowerSpot(int worldX, int worldZ) {
+        for (int[] spot : validTowerSpots) {
+            if (spot[0] == worldX && spot[1] == worldZ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Obtiene la lista de spots válidos para torres
+     * @return Lista de coordenadas [x,z] de spots válidos
+     */
+    public List<int[]> getValidTowerSpots() {
+        return validTowerSpots;
     }
 }
