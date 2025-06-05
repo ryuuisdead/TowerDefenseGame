@@ -65,13 +65,13 @@ public class Enemy extends Node {
                 // Ajustar la escala según el tipo
                 if (type == EnemyType.HELLHOUND) {
                     // Intentar con una escala más grande para el perro
-                    enemyModel.setLocalScale(0.9f);
+                    enemyModel.setLocalScale(0.4f);
                     // Ajustar la posición vertical para asegurarse de que está sobre el suelo
                     enemyModel.setLocalTranslation(0, 0.2f, 0);
                     System.out.println("Aplicada escala y posición al perro infernal");
                 } else if (type == EnemyType.BASIC) {
                     // Ajustar la escala del zombie
-                    enemyModel.setLocalScale(0.015f);
+                    enemyModel.setLocalScale(0.006f);
                     enemyModel.setLocalTranslation(0, 0.0f, 0);
                     
                     // Aplicar textura de lava al zombie
@@ -100,7 +100,7 @@ public class Enemy extends Node {
                     System.out.println("Aplicada escala y posición al zombie");
                 } else if (type == EnemyType.TANK) {
                     // Ajustar la escala del tanque (monstruo del futuro)
-                    enemyModel.setLocalScale(0.0015f);
+                    enemyModel.setLocalScale(0.0006f);
                     enemyModel.setLocalTranslation(0, 0f, 0);
                 
                     
