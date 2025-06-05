@@ -171,11 +171,11 @@ public class Tower extends Node {
             switch (type) {
                 case SNIPER:
                     modelPath = "Models/uploads_files_2746671_Sci-fi+Tower/uploads_files_2746671_Sci-fi+Tower.j3o";
-                    modelScale = 0.11f; // Ajustar la escala según este modelo
+                    modelScale = 0.09f; // Ajustar la escala según este modelo
                     break;
                 case RAPID:
                     modelPath = "Models/wizard tower/wizard tower.j3o"; // Por ahora usa el mismo modelo
-                    modelScale = 0.06f;
+                    modelScale = 0.04f;
                     break;
                 default: // BASIC
                     modelPath = "Models/medivialtower/medivialtower.j3o";
@@ -376,7 +376,7 @@ public class Tower extends Node {
                 
             case RAPID:
                 // Proyectil pequeño (fuego rápido)
-                Sphere fastBullet = new Sphere(2, 2, 0.15f);
+                Sphere fastBullet = new Sphere(3, 3, 0.15f);
                 bulletGeom = new Geometry("Bullet", fastBullet);
                 Material fastBulletMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
                 fastBulletMat.setColor("Color", new ColorRGBA(0.8f, 1f, 0.2f, 1f)); // Amarillo-verde

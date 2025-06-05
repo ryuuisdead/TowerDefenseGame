@@ -11,6 +11,7 @@ import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
+import com.jme3.math.FastMath;
 import com.jme3.scene.Spatial;
 import com.jme3.system.AppSettings;
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class Main extends SimpleApplication {
     private boolean waveInProgress = false;
     
     // Economía del jugador
-    private int money = 160;
+    private int money = 100;
     private int score = 0;
     
     // Constantes para la torre
@@ -415,8 +416,7 @@ public class Main extends SimpleApplication {
             isValidPlacement = false;
         }
     }
-    
-    private void manageWaves(float tpf) {
+      private void manageWaves(float tpf) {
         // Si no hay oleada en progreso, empezar una nueva después de un tiempo
         if (!waveInProgress) {
             waveTimer += tpf;
@@ -428,7 +428,22 @@ public class Main extends SimpleApplication {
             // Si hay una oleada en progreso, generar enemigos
             if (enemiesSpawned < enemiesInWave) {
                 spawnTimer += tpf;
-                if (spawnTimer >= 1.5f) { // Intervalos de 1.5 segundos entre enemigos
+                
+                // Calcular el intervalo de spawn basado en la oleada
+                float spawnInterval;
+                if (currentWave >= 10) {
+                    // A partir de la oleada 10: intervalo aleatorio entre 0.5 y 1 segundo
+                    spawnInterval = 0.5f + FastMath.nextRandomFloat() * 0.5f;
+                } else if (currentWave >= 6) {
+                    // Entre oleada 6-9: intervalo decrece linealmente de 1.5 a 1.0
+                    float progress = (currentWave - 6) / 4.0f; // 0.0 a 1.0
+                    spawnInterval = 1.5f - (0.5f * progress);
+                } else {
+                    // Oleadas 1-5: intervalo fijo de 1.5 segundos
+                    spawnInterval = 1.5f;
+                }
+                
+                if (spawnTimer >= spawnInterval) {
                     spawnEnemy();
                     spawnTimer = 0;
                 }
@@ -485,13 +500,9 @@ public class Main extends SimpleApplication {
             if (currentWave <= 6) {
                 // Mejora lineal de la ronda 2 a 6 (*1, *2, *3, *4, *5)
                 mejora = 0.2f * (currentWave - 1); // 0.2, 0.4, 0.6, 0.8, 1.0
-            } else if (currentWave <= 10) {
-                // Rondas 7-10: aumentos más graduales
-                mejora = 1.0f + (0.15f * (currentWave - 6)); // 1.15, 1.30, 1.45, 1.60
             } else {
-                // A partir de la ronda 10, mejora exponencial más agresiva
-                mejora = 1.6f * (float)Math.pow(1.25, currentWave - 10); // Comienza en ~2.0 y crece más rápido
-            }
+                mejora = 1.6f * (float)Math.pow(1.25, currentWave - 6);
+            } 
             enemy.upgradeStats(mejora);
         }
 
