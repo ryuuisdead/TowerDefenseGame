@@ -394,8 +394,31 @@ public class Enemy extends Node {
     }
 
     public void upgradeStats(float param){
-        this.maxHealth += (int)(this.maxHealth * param);
-        this.speed += this.speed * param;
+        float maxSpeedTank = 3.0f;
+        float maxSpeedPerro = 7.0f;
+        float maxSpeedZombie = 5.0f;
+        
+        float speedNueva = getSpeed();
+        speedNueva += speedNueva * param;
+        
+        if(this.type.getName() == "Monstruo Tanque" && speedNueva > maxSpeedTank){
+            this.maxHealth += (int)(this.maxHealth * (2*param));
+            this.speed = maxSpeedTank;
+        }else if (this.type.getName() == "Zombie" && speedNueva > maxSpeedPerro){
+            this.maxHealth += (int)(this.maxHealth * (2*param));
+            this.speed = maxSpeedZombie;
+        }else if (this.type.getName() == "Perro Infernal" && speedNueva > maxSpeedZombie){
+            this.maxHealth += (int)(this.maxHealth * (2*param));
+            this.speed = maxSpeedPerro;
+        }else{
+            this.maxHealth += (int)(this.maxHealth * param);
+            this.speed += this.speed * param;
+        }
+            
+        
+        System.out.println("-------------"+this.type.getName()+"-------------------");
+        System.out.println("VIDA "+this.maxHealth+"---- VELOCIDAD"+this.speed+"-----");
+        System.out.println("----------------"+param+"--------------------");
     }
     
     // Getters
@@ -408,4 +431,5 @@ public class Enemy extends Node {
     }
     public EnemyType getType() { return type; }
     public int getReward() { return reward; }
+    public float getSpeed() {return speed;}
 }
