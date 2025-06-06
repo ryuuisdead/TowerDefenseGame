@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import mygame.Main;
 import mygame.enemies.Enemy;
+import com.jme3.texture.Texture;
 
 public class Tower extends Node {
     
@@ -202,16 +203,91 @@ public class Tower extends Node {
             // Ajustar la posición según el tipo de torre para corregir desfases
             if (type == TowerType.SNIPER) {
                 // Corregir el offset del modelo Sci-Fi
-                // Estos valores debes ajustarlos según necesites
-                towerModel.setLocalTranslation(0.1f,-1f, 1.3f); // Valores iniciales para probar
+                towerModel.setLocalTranslation(0.1f, -1f, 1.3f);
+            } else if (type == TowerType.RAPID) {
+                towerModel.setLocalTranslation(0, -0.4f, 0);
             }
             
-            if (type == TowerType.RAPID) {
-               
-                towerModel.setLocalTranslation(0,-0.4f,0); // Valores iniciales para probar
+            // Aplicar textura específica según el tipo de torre
+            if (type == TowerType.BASIC) {
+                try {
+                    // Crear el material para la torre básica
+                    Material towerMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                    
+                    // Cargar la textura específica
+                    Texture towerTexture = assetManager.loadTexture("Textures/texture_basic_tower/basictower2.jpg");
+                    
+                    // Configurar parámetros de la textura para mejor calidad
+                    towerTexture.setAnisotropicFilter(8);
+                    towerTexture.setMagFilter(Texture.MagFilter.Bilinear);
+                    
+                    // Aplicar la textura al material
+                    towerMaterial.setTexture("ColorMap", towerTexture);
+                    
+                    // Optimizar el tinte para resaltar detalles de la textura
+                    towerMaterial.setColor("Color", new ColorRGBA(0.9f, 0.9f, 0.9f, 1.0f));
+                    
+                    // Aplicar el material al modelo completo
+                    applyMaterialToSpatial(towerModel, towerMaterial);
+                    
+                    System.out.println("Textura de torre básica aplicada correctamente");
+                } catch (Exception e) {
+                    System.out.println("Error al aplicar textura a la torre básica: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else if (type == TowerType.RAPID) {
+                try {
+                    // Crear el material para la torre rápida
+                    Material rapidTowerMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                    
+                    // Cargar la textura específica para la torre rápida
+                    Texture rapidTowerTexture = assetManager.loadTexture("Textures/texture_rapid_tower/rapidtower1.jpg");
+                    
+                    // Configurar parámetros de la textura para mejor calidad
+                    rapidTowerTexture.setAnisotropicFilter(8);
+                    rapidTowerTexture.setMagFilter(Texture.MagFilter.Bilinear);
+                    
+                    // Aplicar la textura al material
+                    rapidTowerMaterial.setTexture("ColorMap", rapidTowerTexture);
+                    
+                    // Añadir un tinte ligeramente verde para enfatizar que es la torre rápida
+                    rapidTowerMaterial.setColor("Color", new ColorRGBA(0.8f, 1.0f, 0.8f, 1.0f));
+                    
+                    // Aplicar el material al modelo completo
+                    applyMaterialToSpatial(towerModel, rapidTowerMaterial);
+                    
+                    System.out.println("Textura de torre rápida aplicada correctamente");
+                } catch (Exception e) {
+                    System.out.println("Error al aplicar textura a la torre rápida: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else if (type == TowerType.SNIPER) {
+                try {
+                    // Crear el material para la torre francotirador
+                    Material sniperTowerMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                    
+                    // Cargar la textura específica para la torre francotirador
+                    Texture sniperTowerTexture = assetManager.loadTexture("Textures/texture_sniper_tower/franco1.jpg");
+                    
+                    // Configurar parámetros de la textura para mejor calidad
+                    sniperTowerTexture.setAnisotropicFilter(8);
+                    sniperTowerTexture.setMagFilter(Texture.MagFilter.Bilinear);
+                    
+                    // Aplicar la textura al material
+                    sniperTowerMaterial.setTexture("ColorMap", sniperTowerTexture);
+                    
+                    // Añadir un tinte ligeramente rojizo para enfatizar que es la torre francotirador
+                    sniperTowerMaterial.setColor("Color", new ColorRGBA(1.0f, 0.8f, 0.8f, 1.0f));
+                    
+                    // Aplicar el material al modelo completo
+                    applyMaterialToSpatial(towerModel, sniperTowerMaterial);
+                    
+                    System.out.println("Textura de torre francotirador aplicada correctamente");
+                } catch (Exception e) {
+                    System.out.println("Error al aplicar textura a la torre francotirador: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
-            
-            
             
             // La base del modelo estará en la posición de la torre
             this.attachChild(towerModel);
@@ -261,6 +337,22 @@ public class Tower extends Node {
             // Si falla la carga del modelo 3D, usar el modelo básico de cubos
             useModel = false;
             createBasicTowerModel(type);
+        }
+    }
+    
+    /**
+     * Aplica un material a todas las geometrías de un objeto espacial (Spatial)
+     * @param spatial El objeto al que aplicar el material
+     * @param material El material a aplicar
+     */
+    private void applyMaterialToSpatial(Spatial spatial, Material material) {
+        if (spatial instanceof Geometry) {
+            ((Geometry) spatial).setMaterial(material);
+        } else if (spatial instanceof Node) {
+            // Si es un nodo, aplicar recursivamente a todos sus hijos
+            for (Spatial child : ((Node) spatial).getChildren()) {
+                applyMaterialToSpatial(child, material);
+            }
         }
     }
     
