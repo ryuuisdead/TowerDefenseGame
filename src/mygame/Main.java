@@ -31,6 +31,7 @@ import com.jme3.audio.AudioData.DataType;
 import mygame.menu.MenuState;
 import com.jme3.material.RenderState;
 import com.jme3.scene.shape.Quad;
+import java.io.*;
 
 public class Main extends SimpleApplication {
 
@@ -51,6 +52,7 @@ public class Main extends SimpleApplication {
     // Economía del jugador
     private int money = 100;
     private int score = 0;
+    private int highScore = 0;
     
     // Constantes para la torre
     private static final int TOWER_COST = 50; // Coste de construir una torre
@@ -74,6 +76,7 @@ public class Main extends SimpleApplication {
     
     // Audio del juego
     private AudioNode gameMusic;
+    private boolean gameOverActive = false;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -93,11 +96,16 @@ public class Main extends SimpleApplication {
         
         // Inicializar el menú en lugar del juego directamente
         initMenu();
+        
+        highScore = loadHighScore();
     }
     
     private void initMenu() {
-        // Crear y añadir el estado del menú
-        menuState = new MenuState(() -> startGame());
+        if (menuState == null) {
+            menuState = new MenuState(() -> startGame());
+        }
+        highScore = loadHighScore();
+        menuState.setHighScore(highScore);
         stateManager.attach(menuState);
         
         // Configurar cámara para el menú
@@ -180,6 +188,11 @@ public class Main extends SimpleApplication {
         inputManager.addMapping("DeleteTower", new KeyTrigger(com.jme3.input.KeyInput.KEY_E));
         inputManager.addListener(actionListener, "DeleteTower");
         
+        // Añadir mapeo para reintentar juego
+        inputManager.addMapping("RetryGame", new com.jme3.input.controls.KeyTrigger(com.jme3.input.KeyInput.KEY_SPACE));
+        inputManager.addMapping("ReturnToMenu", new com.jme3.input.controls.KeyTrigger(com.jme3.input.KeyInput.KEY_ESCAPE));
+        inputManager.addListener(actionListener, "RetryGame", "ReturnToMenu");
+        
         // Listener para acciones
         inputManager.addListener(actionListener, "PlaceTower", "SelectTower1", "SelectTower2", "SelectTower3");
     }
@@ -191,10 +204,18 @@ public class Main extends SimpleApplication {
         rootNode.attachChild(towerPlacementIndicator);
     }
     
-    private ActionListener actionListener = new ActionListener() {
+    private final ActionListener actionListener = new ActionListener() {
         @Override
         public void onAction(String name, boolean isPressed, float tpf) {
             if (isPressed) {
+                if (name.equals("RetryGame") && gameOverActive) {
+                    restartGame();
+                    return;
+                }
+                if (name.equals("ReturnToMenu") && gameOverActive) {
+                    returnToMenu();
+                    return;
+                }
                 switch (name) {
                     case "PlaceTower":
                         placeTowerAtCursor();
@@ -328,8 +349,7 @@ public class Main extends SimpleApplication {
 
     @Override
     public void simpleUpdate(float tpf) {
-        // Solo actualizar la lógica del juego si el juego ha comenzado
-        if (!gameStarted) {
+        if (!gameStarted || gameOverActive) {
             return;
         }
         
@@ -693,6 +713,12 @@ public class Main extends SimpleApplication {
         System.out.println("Han escapado " + escapedDemons + " demonios");
         System.out.println("Puntuación final: " + score);
         System.out.println("Oleada alcanzada: " + currentWave);
+        if (score > highScore) {
+            highScore = score;
+            saveHighScore(highScore);
+        }
+        gameOverActive = true;
+        gameUI.showGameOverMessage(score, currentWave, highScore);
         
         // Detener la música del juego gradualmente
         if (gameMusic != null) {
@@ -712,9 +738,6 @@ public class Main extends SimpleApplication {
                 gameMusic = null;
             }).start();
         }
-        
-        // Mostrar mensaje de game over en la UI
-        gameUI.showGameOverMessage(score, currentWave);
         
         // Detener la generación de oleadas
         waveInProgress = false;
@@ -926,5 +949,76 @@ public class Main extends SimpleApplication {
             // Añadir al rootNode
             rootNode.attachChild(spotGeom);
         }
+    }
+    
+    private void restartGame() {
+        // Reiniciar variables principales
+        enemies.clear();
+        towers.clear();
+        escapedDemons = 0;
+        money = 100;
+        score = 0;
+        currentWave = 1;
+        enemiesInWave = 5;
+        enemiesSpawned = 0;
+        waveInProgress = false;
+        gameOverActive = false;
+        rootNode.detachAllChildren();
+        guiNode.detachAllChildren();
+        // Volver a inicializar el juego
+        initGame();
+        gameStarted = true;
+        System.out.println("Juego reiniciado");
+    }
+    
+    private int loadHighScore() {
+    try {
+        File file = new File("assets/score/highscore.txt");
+        if (!file.exists()) return 0;
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line = reader.readLine();
+        reader.close();
+        return Integer.parseInt(line.trim());
+    } catch (Exception e) {
+        return 0;
+    }
+}
+private void saveHighScore(int score) {
+    try {
+        FileWriter writer = new FileWriter("assets/score/highscore.txt", false);
+        writer.write(Integer.toString(score));
+        writer.close();
+    } catch (Exception e) {
+        System.err.println("No se pudo guardar el highscore: " + e.getMessage());
+    }
+}
+    
+public int getHighScore() {
+    return highScore;
+}
+
+    private void returnToMenu() {
+        // Limpiar la escena y variables del juego
+        enemies.clear();
+        towers.clear();
+        escapedDemons = 0;
+        money = 100;
+        score = 0;
+        currentWave = 1;
+        enemiesInWave = 5;
+        enemiesSpawned = 0;
+        waveInProgress = false;
+        gameOverActive = false;
+        gameStarted = false;
+        this.getRootNode().detachAllChildren();
+        this.getGuiNode().detachAllChildren();
+        // Detener música del juego si sigue sonando
+        if (gameMusic != null) {
+            gameMusic.stop();
+            gameMusic = null;
+        }
+        // Volver al menú principal y actualizar el récord
+        initMenu();
+        System.out.println("Regresando al menú principal");
     }
 }

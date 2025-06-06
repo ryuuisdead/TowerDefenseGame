@@ -39,6 +39,7 @@ public class MenuState extends AbstractAppState implements ActionListener {
     private Geometry startButton;
     private BitmapText titleText;
     private BitmapText startButtonText;
+    private BitmapText highScoreText; // Referencia al texto del highscore
     
     // Audio
     private com.jme3.audio.AudioNode menuMusic;
@@ -46,6 +47,8 @@ public class MenuState extends AbstractAppState implements ActionListener {
     
     // Callback para cuando se presiona el botón start
     private Runnable startGameCallback;
+
+    private int highScore = 0; // Nuevo campo para almacenar el highscore
 
     public MenuState(Runnable startGameCallback) {
         this.startGameCallback = startGameCallback;
@@ -139,6 +142,17 @@ public class MenuState extends AbstractAppState implements ActionListener {
         titleText.setLocalTranslation(titleX, titleY, 0);
         
         menuNode.attachChild(titleText);
+        
+        // Mostrar el highscore debajo del título
+        highScoreText = new BitmapText(font);
+        highScoreText.setText("TU RECORD ES DE: " + highScore);
+        highScoreText.setSize(font.getCharSet().getRenderedSize() * 1.2f);
+        highScoreText.setColor(ColorRGBA.Yellow);
+        float hsWidth = highScoreText.getLineWidth();
+        float hsX = (width - hsWidth) / 2;
+        float hsY = titleY - 50;
+        highScoreText.setLocalTranslation(hsX, hsY, 0);
+        menuNode.attachChild(highScoreText);
     }      private void createStartButton(int width, int height) {        // Crear un botón usando Picture para la imagen
         com.jme3.ui.Picture startButtonPic = new com.jme3.ui.Picture("StartButton");
         
@@ -258,6 +272,13 @@ public class MenuState extends AbstractAppState implements ActionListener {
             }
             return null;
         });
+    }
+
+    public void setHighScore(int highScore) {
+        this.highScore = highScore;
+        if (highScoreText != null) {
+            highScoreText.setText("TU RECORD ES DE: " + highScore);
+        }
     }
 
     @Override

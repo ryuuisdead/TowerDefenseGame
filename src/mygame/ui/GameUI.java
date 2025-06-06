@@ -196,7 +196,7 @@ public class GameUI {
      * @param score Puntuación final del jugador
      * @param wave Oleada alcanzada
      */
-    public void showGameOverMessage(int score, int wave) {
+    public void showGameOverMessage(int score, int wave, int highScore) {
         BitmapFont guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
         
         // Panel para Game Over
@@ -230,6 +230,30 @@ public class GameUI {
         waveLabel.setText("Oleada alcanzada: " + wave);
         waveLabel.setLocalTranslation(300, 250, 0);
         gameOverPanel.attachChild(waveLabel);
+        
+        // Highscore
+        BitmapText highScoreLabel = new BitmapText(guiFont, false);
+        highScoreLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.2f);
+        highScoreLabel.setColor(ColorRGBA.Yellow);
+        highScoreLabel.setText("TU RECORD ES DE: " + highScore);
+        highScoreLabel.setLocalTranslation(270, 210, 0);
+        gameOverPanel.attachChild(highScoreLabel);
+        
+        // Mensaje de reintentar
+        BitmapText retryLabel = new BitmapText(guiFont, false);
+        retryLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.2f);
+        retryLabel.setColor(ColorRGBA.Yellow);
+        retryLabel.setText("REINTENTAR - TECLA ESPACIO");
+        retryLabel.setLocalTranslation(270, 180, 0);
+        gameOverPanel.attachChild(retryLabel);
+        
+        // Mensaje de volver al menú
+        BitmapText menuLabel = new BitmapText(guiFont, false);
+        menuLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.2f);
+        menuLabel.setColor(ColorRGBA.Orange);
+        menuLabel.setText("Volver al menu principal - escape (Esc)");
+        menuLabel.setLocalTranslation(230, 150, 0);
+        gameOverPanel.attachChild(menuLabel);
         
         // Añadir al nodo GUI
         guiNode.attachChild(gameOverPanel);
