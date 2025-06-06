@@ -223,15 +223,15 @@ public class Main extends SimpleApplication {
                         break;
                     case "SelectTower1":
                         gameUI.selectTowerType(TowerType.BASIC);
-                        updateTowerIndicator();
+                        
                         break;
                     case "SelectTower2":
                         gameUI.selectTowerType(TowerType.SNIPER);
-                        updateTowerIndicator();
+                        
                         break;
                     case "SelectTower3":
                         gameUI.selectTowerType(TowerType.RAPID);
-                        updateTowerIndicator();
+                       
                         break;
                     case "SelectTower":
                         selectTowerAtCursor();
@@ -1009,4 +1009,3 @@ public int getHighScore() {
         System.out.println("Regresando al menú principal");
     }
 }
-createIndicator
