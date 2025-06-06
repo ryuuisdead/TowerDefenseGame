@@ -525,7 +525,7 @@ public class Main extends SimpleApplication {
                 // Mejora lineal de la ronda 2 a 6 (*1, *2, *3, *4, *5)
                 mejora = 0.2f * (currentWave - 1); // 0.2, 0.4, 0.6, 0.8, 1.0
             } else {
-                mejora = 1.6f * (float)Math.pow(1.25, currentWave - 6);
+                mejora = 1.1f * (float)Math.pow(1.25, currentWave - 6);
             } 
             enemy.upgradeStats(mejora);
         }
