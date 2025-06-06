@@ -1,6 +1,6 @@
-# TowerDefenseGame# Tower Defense Infernal 🔥
+# Tower Defense Infernal 🔥
 
-Un juego de Tower Defense ambientado en un mundo infernal, desarrollado con JMonkeyEngine 3.
+Un juego tower defense en 3D con temática infernal desarrollado con JMonkeyEngine 3, donde defiendes tu portal contra oleadas de demonios.
 
 ![Java](https://img.shields.io/badge/Java-8%2B-orange)
 ![JMonkeyEngine](https://img.shields.io/badge/JMonkeyEngine-3.6%2B-blue)
@@ -8,12 +8,14 @@ Un juego de Tower Defense ambientado en un mundo infernal, desarrollado con JMon
 
 ## 🎮 Características
 
-- **Ambiente Infernal**: Terreno volcánico con caminos de lava brillante
-- **Sistema de Torres**: Coloca torres estratégicamente para defender tu territorio
-- **Enemigos Zombies**: Criaturas que siguen un camino predefinido en zigzag
-- **Sistema de Oleadas**: Oleadas progresivas con dificultad creciente
-- **Economía**: Sistema de dinero para comprar y mejorar torres
-- **Gráficos 3D**: Modelos 3D, iluminación atmosférica y efectos visuales
+- **Tres tipos de torres** con funciones especializadas:
+  - **Torre Básica**: Equilibrada, ideal para principiantes
+  - **Torre Francotirador**: Alto daño, largo alcance, pero disparo lento
+  - **Torre Rápida**: Disparos rápidos, ideal para grupos de enemigos
+- **Sistema de mejoras**: Cada torre puede mejorarse hasta nivel 3, con texturas especiales al máximo nivel
+- **Oleadas progresivas**: La dificultad aumenta con cada oleada, con enemigos más rápidos y resistentes
+- **Economía balanceada**: Gana oro por eliminar enemigos y úsalo estratégicamente
+- **Portal defensivo**: Protege el portal contra los demonios invasores
 
 ## 🚀 Tecnologías Utilizadas
 
@@ -52,7 +54,7 @@ cd TowerDefenseGame
 
 ## 🎯 Cómo Jugar
 
-1. **Objetivo**: Evita que los enemigos zombies lleguen al final del camino de lava
+1. **Objetivo**: Evita que los enemigos lleguen al final del camino y destruyan tu portal
 2. **Colocar Torres**: 
    - Haz clic izquierdo en una posición verde válida
    - Las torres cuestan 50 monedas cada una
@@ -70,11 +72,11 @@ TowerDefenseGame/
 │   └── mygame/
 │       ├── Main.java              # Clase principal y lógica del juego
 │       ├── enemies/
-│       │   └── Enemy.java         # Lógica de enemigos zombies
+│       │   └── Enemy.java         # Lógica de enemigos
 │       ├── towers/
 │       │   └── Tower.java         # Sistema de torres y proyectiles
 │       ├── map/
-│       │   ├── GameMap.java       # Mapa infernal con decoraciones
+│       │   ├── GameMap.java       # Mapa con decoraciones infernales
 │       │   └── Path.java          # Sistema de caminos y waypoints
 │       └── ui/
 │           └── GameUI.java        # Interfaz de usuario y HUD
@@ -133,7 +135,7 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 
 ## 👤 Autor
 
-- **Tu Nombre** - [@TU_USUARIO](https://github.com/TU_USUARIO)
+- **Yurefth Martinez, Jesus Alejandro Colmenero**
 
 ## 🙏 Reconocimientos
 
