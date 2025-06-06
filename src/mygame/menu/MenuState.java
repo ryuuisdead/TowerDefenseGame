@@ -131,7 +131,7 @@ public class MenuState extends AbstractAppState implements ActionListener {
         // Crear texto para el título
         BitmapFont font = assetManager.loadFont("Interface/Fonts/Default.fnt");
         titleText = new BitmapText(font);
-        titleText.setText("INFERNO - TOWER DEFENSE");
+        titleText.setText("INFERNO DEFENSE");
         titleText.setSize(font.getCharSet().getRenderedSize() * 2); // Duplicar tamaño
         titleText.setColor(new ColorRGBA(1f, 0.6f, 0.2f, 1f)); // Color naranja
         
