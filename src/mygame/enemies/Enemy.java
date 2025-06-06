@@ -64,10 +64,38 @@ public class Enemy extends Node {
                 System.out.println("¡Modelo cargado con éxito!");
                 // Ajustar la escala según el tipo
                 if (type == EnemyType.HELLHOUND) {
-                    // Intentar con una escala más grande para el perro
+                    // Ajustar la escala para el perro
                     enemyModel.setLocalScale(0.4f);
                     // Ajustar la posición vertical para asegurarse de que está sobre el suelo
                     enemyModel.setLocalTranslation(0, 0.2f, 0);
+                    
+                    // Aplicar textura al perro infernal
+                    try {
+                        // Crear nuevo material para el perro
+                        Material dogMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                        
+                        // Cargar la textura específica del perro
+                        Texture dogTexture = assetManager.loadTexture("Textures/texture_dog/texture_dog2.jpg");
+                        
+                        // Configurar parámetros de la textura para mejor calidad
+                        dogTexture.setAnisotropicFilter(8);
+                        dogTexture.setMagFilter(Texture.MagFilter.Bilinear);
+                        
+                        // Aplicar la textura al material
+                        dogMaterial.setTexture("ColorMap", dogTexture);
+                        
+                        // Aplicar un tinte rojo oscuro para hacerlo parecer más infernal
+                        dogMaterial.setColor("Color", new ColorRGBA(0.9f, 0.2f, 0.2f, 1.0f));
+                        
+                        // Aplicar el material al modelo del perro
+                        applyMaterialToSpatial(enemyModel, dogMaterial);
+                        
+                        System.out.println("Textura de perro infernal aplicada correctamente");
+                    } catch (Exception e) {
+                        System.out.println("Error al aplicar textura al perro infernal: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                    
                     System.out.println("Aplicada escala y posición al perro infernal");
                 } else if (type == EnemyType.BASIC) {
                     // Ajustar la escala del zombie
@@ -103,6 +131,32 @@ public class Enemy extends Node {
                     enemyModel.setLocalScale(0.0006f);
                     enemyModel.setLocalTranslation(0, 0f, 0);
                 
+                    // Aplicar textura al tanque
+                    try {
+                        // Crear un nuevo material para el tanque
+                        Material tankMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                        
+                        // Cargar la textura específica del tanque
+                        Texture tankTexture = assetManager.loadTexture("Textures/textura_tanque/textura_tanque.jpg");
+                        
+                        // Configurar parámetros de la textura para mejor calidad
+                        tankTexture.setAnisotropicFilter(8);
+                        tankTexture.setMagFilter(Texture.MagFilter.Bilinear);
+                        
+                        // Aplicar la textura al material
+                        tankMaterial.setTexture("ColorMap", tankTexture);
+                        
+                        // Aplicar un color ligeramente oscuro para añadir profundidad
+                        tankMaterial.setColor("Color", new ColorRGBA(0.7f, 0.7f, 0.7f, 1.0f));
+                        
+                        // Aplicar el material al modelo del tanque
+                        applyMaterialToSpatial(enemyModel, tankMaterial);
+                        
+                        System.out.println("Textura del tanque aplicada correctamente");
+                    } catch (Exception e) {
+                        System.out.println("Error al aplicar textura al tanque: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                     
                     System.out.println("Aplicada escala y posición al tanque");
                 }
