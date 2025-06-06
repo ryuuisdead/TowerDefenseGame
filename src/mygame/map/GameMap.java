@@ -137,10 +137,10 @@ public class GameMap extends Node {
      */
     private void addSingleWall(AssetManager assetManager) {
         // Posicionar el primer muro (el original)
-        addRockWall(assetManager, 5, 2, 5, 0);
+        addRockWall(assetManager, 10, 2, 14, 0);
         
         // Posicionar el segundo muro junto al primero, rotado 90 grados
-        addRockWall(assetManager, -5, 3, 0, 270);
+        addRockWall(assetManager, -14, 3, 0, 270);
     }
     
     /**
@@ -161,7 +161,7 @@ public class GameMap extends Node {
             applyRockTexture(rockWall, assetManager);
             
             // Escalar el muro si es necesario
-            float wallScale = 1.5f; // Ajustar según el tamaño del modelo
+            float wallScale = 2.5f; // Ajustar según el tamaño del modelo
             rockWall.setLocalScale(wallScale);
             
             // Posicionar el muro en la ubicación especificada
