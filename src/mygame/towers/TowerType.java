@@ -10,16 +10,16 @@ public enum TowerType {
           new float[]{3.0f, 3.5f}, // Rango mejorado por nivel (opcional)
           "Sounds/Towers/basic.wav"), // Sonido de disparo
           
-    SNIPER("Torre Francotirador", 45, 4, 4.0f, 0.6f, ColorRGBA.Gray, ColorRGBA.Red, "Alto daño, baja cadencia",
+    SNIPER("Torre Francotirador", 45, 4, 5.0f, 0.6f, ColorRGBA.Gray, ColorRGBA.Red, "Alto daño, baja cadencia",
            new int[]{8, 15}, // Daño mejorado por nivel
            new float[]{0.7f, 0.8f}, // Multiplicador de cadencia por nivel
            new int[]{35, 45}, // Costo de mejora por nivel
            new float[]{5.0f, 6.5f}, // Rango mejorado por nivel (opcional)
            "Sounds/Towers/sniper.wav"), // Sonido de disparo
-    RAPID("Torre Rápida", 50, 2, 2.5f, 1.5f, ColorRGBA.Green, ColorRGBA.Yellow, "Disparo rápido de bajo daño",
-          new int[]{3, 5}, // Daño mejorado por nivel
+    RAPID("Torre Rápida", 50, 2, 3f, 1.5f, ColorRGBA.Green, ColorRGBA.Yellow, "Disparo rápido de bajo daño",
+          new int[]{4, 6}, // Daño mejorado por nivel
           new float[]{1.7f, 2.0f}, // Multiplicador de cadencia por nivel
-          new int[]{45, 50}, // Costo de mejora por nivel
+          new int[]{30, 45}, // Costo de mejora por nivel
           new float[]{2.8f, 3.0f}, // Rango mejorado por nivel (opcional)
           "Sounds/Towers/rapid.wav"); // Sonido de disparo
     

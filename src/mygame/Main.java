@@ -438,14 +438,14 @@ public class Main extends SimpleApplication {
                 float spawnInterval;
                 if (currentWave >= 10) {
                     // A partir de la oleada 10: intervalo aleatorio entre 0.5 y 1 segundo
-                    spawnInterval = 0.5f + FastMath.nextRandomFloat() * 0.5f;
+                    spawnInterval = 0.7f + FastMath.nextRandomFloat() * 0.7f;
                 } else if (currentWave >= 6) {
                     // Entre oleada 6-9: intervalo decrece linealmente de 1.5 a 1.0
                     float progress = (currentWave - 6) / 4.0f; // 0.0 a 1.0
-                    spawnInterval = 1.5f - (0.5f * progress);
+                    spawnInterval = 1.3f - (0.5f * progress);
                 } else {
                     // Oleadas 1-5: intervalo fijo de 1.5 segundos
-                    spawnInterval = 1.5f;
+                    spawnInterval = 1.2f;
                 }
                 
                 if (spawnTimer >= spawnInterval) {
