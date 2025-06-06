@@ -203,9 +203,12 @@ public class Tower extends Node {
             // Ajustar la posición según el tipo de torre para corregir desfases
             if (type == TowerType.SNIPER) {
                 // Corregir el offset del modelo Sci-Fi
-                towerModel.setLocalTranslation(0.1f, -1f, 1.3f);
+                towerModel.setLocalTranslation(0.1f, -1f, 0.9f);
             } else if (type == TowerType.RAPID) {
                 towerModel.setLocalTranslation(0, -0.4f, 0);
+            } else { // BASIC
+                // Ajustar la posición de la torre básica para corregir el desfase
+                towerModel.setLocalTranslation(0, 0f, 0.3f);
             }
             
             // Aplicar textura específica según el tipo de torre
