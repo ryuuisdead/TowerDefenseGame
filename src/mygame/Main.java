@@ -149,7 +149,7 @@ public class Main extends SimpleApplication {
         createPortal();
         
         // Inicializar la interfaz de usuario
-        gameUI = new GameUI(guiNode, assetManager);
+        gameUI = new GameUI(guiNode, assetManager, settings);
         
         // Configurar inputs
         setupInputs();
