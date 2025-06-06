@@ -148,7 +148,7 @@ public class Main extends SimpleApplication {
         path = new Path();
         
         // Configurar cámara isométrica fija para visualizar mejor el mapa completo
-        cam.setLocation(new Vector3f(-12, 10, 8));
+        cam.setLocation(new Vector3f(-12, 8, 8));
         cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
         flyCam.setEnabled(false);
         flyCam.setMoveSpeed(15f);
