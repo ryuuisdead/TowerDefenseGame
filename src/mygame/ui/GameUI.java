@@ -87,7 +87,7 @@ public class GameUI {
 
         upgradeInfoText = new BitmapText(guiFont);
         upgradeInfoText.setSize(guiFont.getCharSet().getRenderedSize());
-        upgradeInfoText.setLocalTranslation(20, 80, 0); // SIEMPRE A LA IZQUIERDA ABAJO
+        upgradeInfoText.setLocalTranslation(20, 160, 0); // Subido para que siempre sea visible
         guiNode.attachChild(upgradeInfoText);
 
         // Ocultar inicialmente
@@ -206,63 +206,57 @@ public class GameUI {
      */
     public void showGameOverMessage(int score, int wave, int highScore) {
         BitmapFont guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
-        
         // Panel para Game Over
         Node gameOverPanel = new Node("GameOverPanel");
-        
+        float centerX = screenWidth / 2f;
+        float startY = screenHeight / 2f + 120;
+        float spacing = 45f;
         // Título
         BitmapText titleLabel = new BitmapText(guiFont, false);
         titleLabel.setSize(guiFont.getCharSet().getRenderedSize() * 3f); // texto grande
         titleLabel.setColor(ColorRGBA.Red);
         titleLabel.setText("¡GAME OVER!");
-        titleLabel.setLocalTranslation(300, 400, 0);
+        titleLabel.setLocalTranslation(centerX - titleLabel.getLineWidth() / 2, startY, 0);
         gameOverPanel.attachChild(titleLabel);
-        
         // Información
         BitmapText infoLabel = new BitmapText(guiFont, false);
         infoLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.5f);
         infoLabel.setText("Han escapado demasiados demonios.");
-        infoLabel.setLocalTranslation(250, 350, 0);
+        infoLabel.setLocalTranslation(centerX - infoLabel.getLineWidth() / 2, startY - spacing, 0);
         gameOverPanel.attachChild(infoLabel);
-        
         // Puntuación
         BitmapText scoreLabel = new BitmapText(guiFont, false);
         scoreLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.5f);
         scoreLabel.setText("Puntuación final: " + score);
-        scoreLabel.setLocalTranslation(300, 300, 0);
+        scoreLabel.setLocalTranslation(centerX - scoreLabel.getLineWidth() / 2, startY - spacing * 2, 0);
         gameOverPanel.attachChild(scoreLabel);
-        
         // Oleada
         BitmapText waveLabel = new BitmapText(guiFont, false);
         waveLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.5f);
         waveLabel.setText("Oleada alcanzada: " + wave);
-        waveLabel.setLocalTranslation(300, 250, 0);
+        waveLabel.setLocalTranslation(centerX - waveLabel.getLineWidth() / 2, startY - spacing * 3, 0);
         gameOverPanel.attachChild(waveLabel);
-        
         // Highscore
         BitmapText highScoreLabel = new BitmapText(guiFont, false);
         highScoreLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.2f);
         highScoreLabel.setColor(ColorRGBA.Yellow);
         highScoreLabel.setText("TU RECORD ES DE: " + highScore);
-        highScoreLabel.setLocalTranslation(270, 210, 0);
+        highScoreLabel.setLocalTranslation(centerX - highScoreLabel.getLineWidth() / 2, startY - spacing * 4, 0);
         gameOverPanel.attachChild(highScoreLabel);
-        
         // Mensaje de reintentar
         BitmapText retryLabel = new BitmapText(guiFont, false);
         retryLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.2f);
         retryLabel.setColor(ColorRGBA.Yellow);
         retryLabel.setText("REINTENTAR - TECLA ESPACIO");
-        retryLabel.setLocalTranslation(270, 180, 0);
+        retryLabel.setLocalTranslation(centerX - retryLabel.getLineWidth() / 2, startY - spacing * 5, 0);
         gameOverPanel.attachChild(retryLabel);
-        
         // Mensaje de volver al menú
         BitmapText menuLabel = new BitmapText(guiFont, false);
         menuLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.2f);
         menuLabel.setColor(ColorRGBA.Orange);
         menuLabel.setText("Volver al menu principal - tecla 0 (cero)");
-        menuLabel.setLocalTranslation(230, 150, 0);
+        menuLabel.setLocalTranslation(centerX - menuLabel.getLineWidth() / 2, startY - spacing * 6, 0);
         gameOverPanel.attachChild(menuLabel);
-        
         // Añadir al nodo GUI
         guiNode.attachChild(gameOverPanel);
     }
@@ -274,25 +268,19 @@ public class GameUI {
             upgradeInfoText.setText("");
             return;
         }
-        
         TowerType type = tower.getTowerType();
         int level = tower.getLevel();
-        
         // Mostrar información básica de la torre
         towerInfoText.setText(String.format("%s (Nivel %d)\nDaño: %d\nVelocidad: %.2f\nAlcance: %.1f",
                                            type.getName(), level,
                                            tower.getDamage(),
                                            tower.getFireRate(),
                                            tower.getRange()));
-        
-        // Crear un StringBuilder para la información de control
+        // Información de mejora y venta
         StringBuilder controlInfo = new StringBuilder();
-        
-        // Mostrar información de mejora si está disponible
         if (tower.canUpgrade()) {
             int upgradeCost = tower.getUpgradeCost();
             int nextLevel = level + 1;
-            
             controlInfo.append(String.format("MEJORA (Presiona U)\nCosto: %d\nNivel %d: Daño +%d%%, Velocidad +%d%%\n",
                                              upgradeCost, nextLevel,
                                              (int)((type.getUpgradedDamage(nextLevel) - tower.getDamage()) * 100 / tower.getDamage()),
@@ -300,14 +288,10 @@ public class GameUI {
         } else {
             controlInfo.append("NIVEL MÁXIMO\n");
         }
-        
-        // Añadir información sobre cómo eliminar la torre (ahora con la tecla E)
-        controlInfo.append("\nELIMINAR TORRE (Presiona E)\n");
-        // Mostrar valor de reembolso (50% del costo total: costo base + mejoras)
+        // Mostrar siempre la opción de eliminar/vender
         int refundValue = (int)(tower.getTotalInvestment() * 0.5f);
+        controlInfo.append("\nELIMINAR TORRE (Presiona E)\n");
         controlInfo.append("Reembolso: $" + refundValue);
-        
-        // Actualizar el texto de información de control
         upgradeInfoText.setText(controlInfo.toString());
     }
     

@@ -4,7 +4,7 @@ import com.jme3.math.ColorRGBA;
 
 public enum TowerType {
     BASIC("Torre Básica", 30, 3, 2.5f, 1.0f, ColorRGBA.Blue, ColorRGBA.Cyan, "Disparo estándar", 
-          new int[]{5, 6}, // Daño mejorado por nivel
+          new int[]{5, 8}, // Daño mejorado por nivel
           new float[]{1.1f, 1.3f}, // Multiplicador de cadencia por nivel
           new int[]{15, 25}, // Costo de mejora por nivel
           new float[]{3.0f, 3.5f}, // Rango mejorado por nivel (opcional)
@@ -16,11 +16,11 @@ public enum TowerType {
            new int[]{35, 45}, // Costo de mejora por nivel
            new float[]{5.0f, 6.5f}, // Rango mejorado por nivel (opcional)
            "Sounds/Towers/sniper.wav"), // Sonido de disparo
-             RAPID("Torre Rápida", 75, 2, 2.0f, 1.5f, ColorRGBA.Green, ColorRGBA.Yellow, "Disparo rápido de bajo daño",
+    RAPID("Torre Rápida", 65, 2, 2.5f, 1.5f, ColorRGBA.Green, ColorRGBA.Yellow, "Disparo rápido de bajo daño",
           new int[]{3, 5}, // Daño mejorado por nivel
-          new float[]{1.7f, 2.0f}, // Multiplicador de cadencia por nivel
-          new int[]{50, 65}, // Costo de mejora por nivel
-          new float[]{2.5f, 3.0f}, // Rango mejorado por nivel (opcional)
+          new float[]{1.7f, 2.3f}, // Multiplicador de cadencia por nivel
+          new int[]{45, 50}, // Costo de mejora por nivel
+          new float[]{3.0f, 3.5f}, // Rango mejorado por nivel (opcional)
           "Sounds/Towers/rapid.wav"); // Sonido de disparo
     
     private final String name;
