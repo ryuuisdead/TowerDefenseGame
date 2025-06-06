@@ -157,7 +157,7 @@ public class GameUI {
             if (TowerType.values()[i] == selectedTowerType) {
                 towerButtons[i].setColor(ColorRGBA.Green);
             } else {
-                towerButtons[i].setColor(ColorRGBA.White);
+                towerButtons[i].setColor(ColorRGBA.Orange);
             }
         }
         

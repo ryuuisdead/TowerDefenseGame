@@ -533,7 +533,7 @@ public class Tower extends Node {
      * Crea un indicador visual para mostrar dónde se colocará la torre
      */
     public static Geometry createIndicator(AssetManager assetManager, TowerType type) {
-        Box base = new Box(0.4f, 0.4f, 0.4f);
+        Box base = new Box(0.4f, 0.1f, 0.4f);
         Geometry indicator = new Geometry("TowerIndicator", base);
         Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         

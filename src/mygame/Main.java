@@ -247,25 +247,6 @@ public class Main extends SimpleApplication {
         }
     };
 
-    // Método para actualizar el indicador de torre
-    private void updateTowerIndicator() {
-        // Eliminar indicador actual
-        if (towerIndicator != null) {
-            guiNode.detachChild(towerIndicator);
-        }
-        
-        // Crear nuevo indicador
-        TowerType selectedType = gameUI.getSelectedTowerType();
-        towerIndicator = Tower.createIndicator(assetManager, selectedType);
-        
-        // Posicionar en una esquina de la pantalla (coordenadas 2D)
-        towerIndicator.setLocalTranslation(550, 80, 0);
-        
-        // Ajustar escala para que se vea bien en la GUI
-        towerIndicator.setLocalScale(50);
-        
-        guiNode.attachChild(towerIndicator);
-    }
 
     private void placeTowerAtCursor() {
         // Obtener la posición del ratón
@@ -1028,3 +1009,4 @@ public int getHighScore() {
         System.out.println("Regresando al menú principal");
     }
 }
+createIndicator
