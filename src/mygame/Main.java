@@ -190,7 +190,7 @@ public class Main extends SimpleApplication {
         
         // Añadir mapeo para reintentar juego
         inputManager.addMapping("RetryGame", new com.jme3.input.controls.KeyTrigger(com.jme3.input.KeyInput.KEY_SPACE));
-        inputManager.addMapping("ReturnToMenu", new com.jme3.input.controls.KeyTrigger(com.jme3.input.KeyInput.KEY_ESCAPE));
+        inputManager.addMapping("ReturnToMenu", new com.jme3.input.controls.KeyTrigger(com.jme3.input.KeyInput.KEY_0));
         inputManager.addListener(actionListener, "RetryGame", "ReturnToMenu");
         
         // Listener para acciones
@@ -212,6 +212,7 @@ public class Main extends SimpleApplication {
                     restartGame();
                     return;
                 }
+                // Cambia la condición a Delete
                 if (name.equals("ReturnToMenu") && gameOverActive) {
                     returnToMenu();
                     return;
@@ -391,7 +392,7 @@ public class Main extends SimpleApplication {
         updateTowerPlacementIndicator();
         
         // Actualizar UI
-        gameUI.update(money, score, currentWave, waveInProgress, 5.0f - waveTimer);
+        gameUI.update(money, score, currentWave, waveInProgress, 5.0f - waveTimer, MAX_ESCAPED_DEMONS - escapedDemons);
     }
     
     private void updateTowerPlacementIndicator() {
@@ -703,6 +704,11 @@ public class Main extends SimpleApplication {
             }, 300);
         }
         
+        // Actualizar HUD de vida del portal
+        if (gameUI != null) {
+            gameUI.updatePortalLife(MAX_ESCAPED_DEMONS - escapedDemons);
+        }
+        
         // Verificar condición de game over
         if (escapedDemons >= MAX_ESCAPED_DEMONS) {
             gameOver();
@@ -1010,8 +1016,8 @@ public int getHighScore() {
         waveInProgress = false;
         gameOverActive = false;
         gameStarted = false;
-        this.getRootNode().detachAllChildren();
-        this.getGuiNode().detachAllChildren();
+        rootNode.detachAllChildren();
+        guiNode.detachAllChildren();
         // Detener música del juego si sigue sonando
         if (gameMusic != null) {
             gameMusic.stop();

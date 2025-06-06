@@ -26,6 +26,7 @@ public class GameUI {
     private BitmapText moneyText;
     private BitmapText scoreText;
     private BitmapText waveText;
+    private BitmapText portalLifeText; // NUEVO: Vida del portal
     
     // Elementos para selección de torres
     private Node towerSelectionPanel;
@@ -53,6 +54,14 @@ public class GameUI {
         moneyText.setText("Dinero: $100");
         moneyText.setLocalTranslation(20, screenHeight - 30, 0); // SIEMPRE A LA IZQUIERDA ARRIBA
         guiNode.attachChild(moneyText);
+
+        // NUEVO: Texto para mostrar la vida del portal
+        portalLifeText = new BitmapText(guiFont, false);
+        portalLifeText.setSize(guiFont.getCharSet().getRenderedSize() * 1.5f);
+        portalLifeText.setColor(new ColorRGBA(0.8f, 0.5f, 1f, 1f));
+        portalLifeText.setText("Vida del portal: 5");
+        portalLifeText.setLocalTranslation(20, screenHeight - 120, 0); // Debajo de la oleada
+        guiNode.attachChild(portalLifeText);
 
         // Texto para mostrar la puntuación
         scoreText = new BitmapText(guiFont, false);
@@ -163,10 +172,10 @@ public class GameUI {
     /**
      * Actualiza el texto de la interfaz con los valores actuales
      */
-    public void update(int money, int score, int currentWave, boolean waveInProgress, float timeToNextWave) {
+    public void update(int money, int score, int currentWave, boolean waveInProgress, float timeToNextWave, int portalLife) {
         moneyText.setText("Dinero: $" + money);
         scoreText.setText("Puntuación: " + score);
-        
+        portalLifeText.setText("Vida del portal: " + portalLife);
         if (waveInProgress) {
             waveText.setText("Oleada: " + currentWave + " (en progreso)");
             waveText.setColor(new ColorRGBA(1f, 0.3f, 0.3f, 1f));
@@ -175,7 +184,6 @@ public class GameUI {
             waveText.setText("Oleada: " + currentWave + " (próxima en " + timeLeft + " s)");
             waveText.setColor(new ColorRGBA(1f, 0.5f, 0.5f, 1f));
         }
-        
         // Actualizar disponibilidad de torres según el dinero
         for (int i = 0; i < towerButtons.length; i++) {
             TowerType type = TowerType.values()[i];
@@ -251,7 +259,7 @@ public class GameUI {
         BitmapText menuLabel = new BitmapText(guiFont, false);
         menuLabel.setSize(guiFont.getCharSet().getRenderedSize() * 1.2f);
         menuLabel.setColor(ColorRGBA.Orange);
-        menuLabel.setText("Volver al menu principal - escape (Esc)");
+        menuLabel.setText("Volver al menu principal - tecla 0 (cero)");
         menuLabel.setLocalTranslation(230, 150, 0);
         gameOverPanel.attachChild(menuLabel);
         
@@ -306,5 +314,12 @@ public class GameUI {
     // Método para actualizar el dinero
     public void updateMoney(int money) {
         moneyText.setText("Oro: " + money);
+    }
+
+    // NUEVO: Método para actualizar solo la vida del portal
+    public void updatePortalLife(int portalLife) {
+        if (portalLifeText != null) {
+            portalLifeText.setText("Vida del portal: " + portalLife);
+        }
     }
 }
