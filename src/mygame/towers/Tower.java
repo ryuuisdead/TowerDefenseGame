@@ -680,7 +680,83 @@ public class Tower extends Node {
     // Método para aplicar efecto de brillo a torres mejoradas al máximo
     private void applyGlowEffect() {
         try {
-            // Crear un nuevo material para efecto de brillo
+            // Si es torre francotirador al nivel máximo, aplicar textura especial
+            if (towerType == TowerType.SNIPER && level >= MAX_LEVEL) {
+                // Crear un nuevo material para la textura de la torre sniper máxima
+                Material maxSniperMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                
+                // Cargar la textura especial para la torre francotirador al máximo nivel
+                Texture maxSniperTexture = assetManager.loadTexture("Textures/texture_sniper_tower/maximo_sniper.jpg");
+                
+                // Configurar parámetros de la textura para mejor calidad
+                maxSniperTexture.setAnisotropicFilter(8);
+                maxSniperTexture.setMagFilter(Texture.MagFilter.Bilinear);
+                
+                // Aplicar la textura al material
+                maxSniperMaterial.setTexture("ColorMap", maxSniperTexture);
+                
+                // Aplicar el material al modelo completo
+                if (towerModel instanceof Geometry) {
+                    ((Geometry) towerModel).setMaterial(maxSniperMaterial);
+                } else if (towerModel instanceof Node) {
+                    applyMaterialToNode((Node) towerModel, maxSniperMaterial);
+                }
+                
+                System.out.println("Textura de nivel máximo aplicada a la torre francotirador");
+                return; // Salir del método para no aplicar el efecto de brillo
+            }
+            // NUEVO: Si es torre básica al nivel máximo, aplicar textura especial
+            else if (towerType == TowerType.BASIC && level >= MAX_LEVEL) {
+                // Crear un nuevo material para la textura de la torre básica máxima
+                Material maxBasicMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                
+                // Cargar la textura especial para la torre básica al máximo nivel
+                Texture maxBasicTexture = assetManager.loadTexture("Textures/texture_basic_tower/maximo_basic.jpg");
+                
+                // Configurar parámetros de la textura para mejor calidad
+                maxBasicTexture.setAnisotropicFilter(8);
+                maxBasicTexture.setMagFilter(Texture.MagFilter.Bilinear);
+                
+                // Aplicar la textura al material
+                maxBasicMaterial.setTexture("ColorMap", maxBasicTexture);
+                
+                // Aplicar el material al modelo completo
+                if (towerModel instanceof Geometry) {
+                    ((Geometry) towerModel).setMaterial(maxBasicMaterial);
+                } else if (towerModel instanceof Node) {
+                    applyMaterialToNode((Node) towerModel, maxBasicMaterial);
+                }
+                
+                System.out.println("Textura de nivel máximo aplicada a la torre básica");
+                return; // Salir del método para no aplicar el efecto de brillo
+            }
+            // NUEVO: Si es torre rápida al nivel máximo, aplicar textura especial
+            else if (towerType == TowerType.RAPID && level >= MAX_LEVEL) {
+                // Crear un nuevo material para la textura de la torre rápida máxima
+                Material maxRapidMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                
+                // Cargar la textura especial para la torre rápida al máximo nivel
+                Texture maxRapidTexture = assetManager.loadTexture("Textures/texture_rapid_tower/max_rapid3.jpg");
+                
+                // Configurar parámetros de la textura para mejor calidad
+                maxRapidTexture.setAnisotropicFilter(8);
+                maxRapidTexture.setMagFilter(Texture.MagFilter.Bilinear);
+                
+                // Aplicar la textura al material
+                maxRapidMaterial.setTexture("ColorMap", maxRapidTexture);
+                
+                // Aplicar el material al modelo completo
+                if (towerModel instanceof Geometry) {
+                    ((Geometry) towerModel).setMaterial(maxRapidMaterial);
+                } else if (towerModel instanceof Node) {
+                    applyMaterialToNode((Node) towerModel, maxRapidMaterial);
+                }
+                
+                System.out.println("Textura de nivel máximo aplicada a la torre rápida");
+                return; // Salir del método para no aplicar el efecto de brillo
+            }
+            
+            // Para las otras torres, aplicar el efecto de brillo original
             Material glowMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
             
             // Definir colores brillantes según el tipo de torre
@@ -714,7 +790,7 @@ public class Tower extends Node {
             
             System.out.println("Efecto de brillo aplicado a torre nivel " + level);
         } catch (Exception e) {
-            System.out.println("No se pudo aplicar efecto de brillo: " + e.getMessage());
+            System.out.println("No se pudo aplicar efecto visual: " + e.getMessage());
             e.printStackTrace();
         }
     }
